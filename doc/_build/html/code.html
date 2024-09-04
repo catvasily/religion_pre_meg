@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classes and functions for MEG data processing &mdash; religion  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=77e6fb11" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="MEG processing pipeline for the “Religion” project" href="README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            religion
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">MEG processing pipeline for the “Religion” project</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Classes and functions for MEG data processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-run_pipeline">run_pipeline.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#run_pipeline.input"><code class="docutils literal notranslate"><span class="pre">input()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-prefilter">prefilter.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prefilter.extract_head_pos"><code class="docutils literal notranslate"><span class="pre">extract_head_pos()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prefilter.filter_fif"><code class="docutils literal notranslate"><span class="pre">filter_fif()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prefilter.prefilter"><code class="docutils literal notranslate"><span class="pre">prefilter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-maxfilter">maxfilter.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#maxfilter.compute_data_rank"><code class="docutils literal notranslate"><span class="pre">compute_data_rank()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maxfilter.construct_projectors"><code class="docutils literal notranslate"><span class="pre">construct_projectors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maxfilter.erm_filter_bands"><code class="docutils literal notranslate"><span class="pre">erm_filter_bands()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maxfilter.find_bads"><code class="docutils literal notranslate"><span class="pre">find_bads()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maxfilter.maxfilter"><code class="docutils literal notranslate"><span class="pre">maxfilter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maxfilter.remove_bad"><code class="docutils literal notranslate"><span class="pre">remove_bad()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-do_ica">do_ica.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#do_ica.do_ica"><code class="docutils literal notranslate"><span class="pre">do_ica()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#do_ica.ica_raw"><code class="docutils literal notranslate"><span class="pre">ica_raw()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-bem_model">bem_model.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.bem_model"><code class="docutils literal notranslate"><span class="pre">bem_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.bem_sol_pathname"><code class="docutils literal notranslate"><span class="pre">bem_sol_pathname()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.bem_solution_fif"><code class="docutils literal notranslate"><span class="pre">bem_solution_fif()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.construct_bem_solution"><code class="docutils literal notranslate"><span class="pre">construct_bem_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.construct_source_space"><code class="docutils literal notranslate"><span class="pre">construct_source_space()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.make_bem_surfaces"><code class="docutils literal notranslate"><span class="pre">make_bem_surfaces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.make_scalp_surfaces"><code class="docutils literal notranslate"><span class="pre">make_scalp_surfaces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bem_model.src_space_fif"><code class="docutils literal notranslate"><span class="pre">src_space_fif()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src_rec">src_rec.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.beam_extract_label_time_course"><code class="docutils literal notranslate"><span class="pre">beam_extract_label_time_course()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.beamformer_stc_continuous"><code class="docutils literal notranslate"><span class="pre">beamformer_stc_continuous()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.beamformer_stc_epochs"><code class="docutils literal notranslate"><span class="pre">beamformer_stc_epochs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.construct_noise_and_inv_cov"><code class="docutils literal notranslate"><span class="pre">construct_noise_and_inv_cov()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.coregister_mri"><code class="docutils literal notranslate"><span class="pre">coregister_mri()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_beam_weights"><code class="docutils literal notranslate"><span class="pre">get_beam_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_forward_solutions"><code class="docutils literal notranslate"><span class="pre">get_forward_solutions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_fwd_input_fifs"><code class="docutils literal notranslate"><span class="pre">get_fwd_input_fifs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_label_coms"><code class="docutils literal notranslate"><span class="pre">get_label_coms()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_label_pca_weight"><code class="docutils literal notranslate"><span class="pre">get_label_pca_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_label_src_idx"><code class="docutils literal notranslate"><span class="pre">get_label_src_idx()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_label_wts"><code class="docutils literal notranslate"><span class="pre">get_label_wts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_labels"><code class="docutils literal notranslate"><span class="pre">get_labels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.get_voxel_coords"><code class="docutils literal notranslate"><span class="pre">get_voxel_coords()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.read_roi_time_courses"><code class="docutils literal notranslate"><span class="pre">read_roi_time_courses()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.set_source_orientation_signs"><code class="docutils literal notranslate"><span class="pre">set_source_orientation_signs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.src_rec"><code class="docutils literal notranslate"><span class="pre">src_rec()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#src_rec.write_roi_time_courses"><code class="docutils literal notranslate"><span class="pre">write_roi_time_courses()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-epochs">epochs.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#epochs.construct_epochs"><code class="docutils literal notranslate"><span class="pre">construct_epochs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#epochs.epochs_noise_and_inv_cov"><code class="docutils literal notranslate"><span class="pre">epochs_noise_and_inv_cov()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#epochs.get_events_per_epoch"><code class="docutils literal notranslate"><span class="pre">get_events_per_epoch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#epochs.invert_for_rank"><code class="docutils literal notranslate"><span class="pre">invert_for_rank()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#epochs.mask_events"><code class="docutils literal notranslate"><span class="pre">mask_events()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-setup_utils">setup_utils.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.DataHost"><code class="docutils literal notranslate"><span class="pre">DataHost</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.config"><code class="docutils literal notranslate"><span class="pre">DataHost.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.host"><code class="docutils literal notranslate"><span class="pre">DataHost.host</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.cluster_job"><code class="docutils literal notranslate"><span class="pre">DataHost.cluster_job</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.root"><code class="docutils literal notranslate"><span class="pre">DataHost.root</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.pipeline_version"><code class="docutils literal notranslate"><span class="pre">DataHost.pipeline_version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.meg"><code class="docutils literal notranslate"><span class="pre">DataHost.meg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.__init__"><code class="docutils literal notranslate"><span class="pre">DataHost.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_ct_file"><code class="docutils literal notranslate"><span class="pre">DataHost.get_ct_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_fc_file"><code class="docutils literal notranslate"><span class="pre">DataHost.get_fc_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_mri_subjects_dir"><code class="docutils literal notranslate"><span class="pre">DataHost.get_mri_subjects_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_step_in_dir"><code class="docutils literal notranslate"><span class="pre">DataHost.get_step_in_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_step_out_dir"><code class="docutils literal notranslate"><span class="pre">DataHost.get_step_out_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_step_out_file"><code class="docutils literal notranslate"><span class="pre">DataHost.get_step_out_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup_utils.DataHost.get_subject_bem_dir"><code class="docutils literal notranslate"><span class="pre">DataHost.get_subject_bem_dir()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.events_fif"><code class="docutils literal notranslate"><span class="pre">events_fif()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.extract_epochs"><code class="docutils literal notranslate"><span class="pre">extract_epochs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.fif_date"><code class="docutils literal notranslate"><span class="pre">fif_date()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.fif_subject"><code class="docutils literal notranslate"><span class="pre">fif_subject()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.files_to_process"><code class="docutils literal notranslate"><span class="pre">files_to_process()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_bem_data"><code class="docutils literal notranslate"><span class="pre">get_bem_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_erm_band_file"><code class="docutils literal notranslate"><span class="pre">get_erm_band_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_fif_task"><code class="docutils literal notranslate"><span class="pre">get_fif_task()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_head_pos_file"><code class="docutils literal notranslate"><span class="pre">get_head_pos_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_maxfiltered_rank"><code class="docutils literal notranslate"><span class="pre">get_maxfiltered_rank()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_sdict_for_job"><code class="docutils literal notranslate"><span class="pre">get_sdict_for_job()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_subj_subfolder"><code class="docutils literal notranslate"><span class="pre">get_subj_subfolder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_subjects_and_folders"><code class="docutils literal notranslate"><span class="pre">get_subjects_and_folders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_subjects_for_job"><code class="docutils literal notranslate"><span class="pre">get_subjects_for_job()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.get_trans_file_pathname"><code class="docutils literal notranslate"><span class="pre">get_trans_file_pathname()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.is_erm_band_file"><code class="docutils literal notranslate"><span class="pre">is_erm_band_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.is_erm_file"><code class="docutils literal notranslate"><span class="pre">is_erm_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.is_valid_date"><code class="docutils literal notranslate"><span class="pre">is_valid_date()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.is_valid_sid"><code class="docutils literal notranslate"><span class="pre">is_valid_sid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.ltc_file_pathname"><code class="docutils literal notranslate"><span class="pre">ltc_file_pathname()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.make_subject_dict"><code class="docutils literal notranslate"><span class="pre">make_subject_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.meg2mri_subject"><code class="docutils literal notranslate"><span class="pre">meg2mri_subject()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.mri2meg_subject"><code class="docutils literal notranslate"><span class="pre">mri2meg_subject()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup_utils.mri_subjects_to_process"><code class="docutils literal notranslate"><span class="pre">mri_subjects_to_process()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-nearest_pos_def">nearest_pos_def.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#nearest_pos_def.isPD"><code class="docutils literal notranslate"><span class="pre">isPD()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nearest_pos_def.nearestPD"><code class="docutils literal notranslate"><span class="pre">nearestPD()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-args_to_json">args_to_json.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#args_to_json.append_json_to_file"><code class="docutils literal notranslate"><span class="pre">append_json_to_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#args_to_json.parse_arguments"><code class="docutils literal notranslate"><span class="pre">parse_arguments()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-spect_raw_fif">spect_raw_fif.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spect_raw_fif.CONFIG_JSON"><code class="docutils literal notranslate"><span class="pre">CONFIG_JSON</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spect_raw_fif.spect_raw_fif"><code class="docutils literal notranslate"><span class="pre">spect_raw_fif()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-view_raw_fif">view_raw_fif.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#view_raw_fif.CONFIG_JSON"><code class="docutils literal notranslate"><span class="pre">CONFIG_JSON</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#view_raw_fif.view_raw_fif"><code class="docutils literal notranslate"><span class="pre">view_raw_fif()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">religion</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Classes and functions for MEG data processing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/code.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="classes-and-functions-for-meg-data-processing">
+<h1>Classes and functions for MEG data processing<a class="headerlink" href="#classes-and-functions-for-meg-data-processing" title="Link to this heading"></a></h1>
+<section id="module-run_pipeline">
+<span id="run-pipeline-py"></span><h2>run_pipeline.py<a class="headerlink" href="#module-run_pipeline" title="Link to this heading"></a></h2>
+<p><strong>A top level script for running MEG pipeline for
+the religion project data analyses.</strong></p>
+<p>To add a step to be run to this script:</p>
+<ol class="arabic simple">
+<li><p>Encapsulate all the necessary code in a dedicated function</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">def</span> <span class="pre">my_step(ss):</span>
+<span class="pre">...</span>
+<span class="pre">#</span> <span class="pre">NOTE:</span> <span class="pre">Step</span> <span class="pre">return</span> <span class="pre">value</span> <span class="pre">(if</span> <span class="pre">any)</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">used</span>
+<span class="pre">`</span></code></p>
+<p>2. Add corresponding entry to the <cite>cases</cite> dictionary in
+the EPILOGE section at the bottom of this file, in the form</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">'my_step':</span> <span class="pre">my_step</span>
+<span class="pre">`</span></code></p>
+<p>Steps may reside in separate Python files. In that case
+corresponding import statements should be added to this file.</p>
+<p>The variables that are intended to be shared or passed between
+different steps should be defined as attributes of the ss object,
+as follows:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">ss.common_var</span> <span class="pre">=</span> <span class="pre">common_var_value</span>
+<span class="pre">`</span></code></p>
+<p>All input parameters for the script are expected to reside
+in a single JSON file specifed in a global constant
+<cite>INPUT_JSON_FILE</cite> as follows:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">INPUT_JSON_FILE</span> <span class="pre">=</span> <span class="pre">'&lt;my-file&gt;.json'</span>
+<span class="pre">`</span></code></p>
+<p>Contents of the <cite>INPUT_JSON_FILE</cite> is available to each step
+as a dictionary <cite>ss.args</cite>, where <cite>ss</cite> is a reference to this
+application object passed to the step in question as the first argument.</p>
+<p>The sequence of steps to be executed should be listed in <cite>to_run</cite>
+key in the <cite>INPUT_JSON_FILE</cite> file, for example</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">to_run</span> <span class="pre">=</span> <span class="pre">(&quot;init&quot;,&quot;step1&quot;,&quot;step6&quot;)</span>
+<span class="pre">`</span></code></p>
+<hr class="docutils" />
+<dl>
+<dt>Available steps:</dt><dd><p><cite>‘input’</cite>: As is - set all the input and configuration         parameters here. This step should always be run first.</p>
+<p><cite>‘prefilter’</cite>: filter raw files to band of interest, notch powerline.</p>
+<p><cite>‘maxfilter’</cite>: apply tSSS, vibrational artifact correction and head         motion correction.</p>
+<p><cite>‘ica’</cite>: Remove ECG and EOG artifacts using ICA.</p>
+<p><cite>‘bem_model’</cite>: MRI-side actions necessary to create BEM head conductor         model and the source space.</p>
+<p><cite>‘src_rec’</cite>: MEG source reconstruction (inverse solution).</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="run_pipeline.input">
+<span class="sig-name descname"><span class="pre">input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#run_pipeline.input" title="Link to this definition"></a></dt>
+<dd><p>Common initial processing after reading all settings from the
+input JSON file.</p>
+<p>Note that when top-level script has a command-line argument,
+this argument is interpreted as the job number (0-based)
+within the SLURM array job, with the total number of jobs running
+on the computer cluster being equal to <cite>ss.args[‘N_ARRAY_JOBS’]</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Nothing</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-prefilter">
+<span id="prefilter-py"></span><h2>prefilter.py<a class="headerlink" href="#module-prefilter" title="Link to this heading"></a></h2>
+<p><strong>Initial filtering and optional downsampling of the data,
+including notching the powerline frequencies.</strong></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="prefilter.extract_head_pos">
+<span class="sig-name descname"><span class="pre">extract_head_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#prefilter.extract_head_pos" title="Link to this definition"></a></dt>
+<dd><p>Extract and save head positioning information</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>Raw</em>) – MNE Raw object to process</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – dictionary with this substep related parameters</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – verbose level (‘info’, ‘warn’, ‘error’, …)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>pos</strong> (<em>array | None</em>) – Head positioning data (shape (N,10)), or None if
+not found</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prefilter.filter_fif">
+<span class="sig-name descname"><span class="pre">filter_fif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#prefilter.filter_fif" title="Link to this definition"></a></dt>
+<dd><p>In place notch filter and bandpass filter given raw data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>Raw</em>) – MNE Raw object to process</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – dictionary containig parameters for the prefiltering step</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – verbose level (‘info’, ‘warn’, ‘error’, …)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>raw</strong> (<em>Raw</em>) – MNE Python Raw object with filtered data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prefilter.prefilter">
+<span class="sig-name descname"><span class="pre">prefilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#prefilter.prefilter" title="Link to this definition"></a></dt>
+<dd><p>Filter raw files to the frequency band of interest,
+notch powerline frequencies; extract events and head positioning
+data; extract events data; downsample filtered records to
+the target sample rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-maxfilter">
+<span id="maxfilter-py"></span><h2>maxfilter.py<a class="headerlink" href="#module-maxfilter" title="Link to this heading"></a></h2>
+<p><strong>Apply tSSS, vibrational artifact correction and head
+motion correction.</strong></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="maxfilter.compute_data_rank">
+<span class="sig-name descname"><span class="pre">compute_data_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#maxfilter.compute_data_rank" title="Link to this definition"></a></dt>
+<dd><p>Estimate rank of the data by computing covariance matrix of a short segment of the record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>MNE Raw</em>) – the Raw data object</p></li>
+<li><p><strong>tmin</strong> (<em>float</em>) – beginning of time interfal in seconds</p></li>
+<li><p><strong>tmax</strong> (<em>float</em>) – end of time interval in seconds. If None or larger than the record length -
+the end of record will be used</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em>) – the number of jobs to run in parallel. If -1, it is set to the number of CPU cores.</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>data_rank</strong> (<em>int</em>) – the rank estimate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="maxfilter.construct_projectors">
+<span class="sig-name descname"><span class="pre">construct_projectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">erm_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_bads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#maxfilter.construct_projectors" title="Link to this definition"></a></dt>
+<dd><p>Construct additional projectors to be used for max-filtering based
+on empty room recording. The projectors deal with vibrational artifact
+(if any). If either ERM recording does not exist or vibrational artifact
+is not detected, an empty list <cite>[]</cite> will be returned. The detection is
+done by checking the variance captured by extracted projection vectors.
+Only projectors with variance above specified threshold are retained.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>erm_fif</strong> (<em>Path</em>) – pathname to the (full band) ERM recording</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the maxfilter step config dictionary</p></li>
+<li><p><strong>all_bads</strong> (<em>list</em><em> of </em><em>str</em>) – a combined list of bad channels (ERM + current
+record)</p></li>
+<li><p><strong>save_plots</strong> (<em>bool</em>) – flag to save projector topomap plots</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>projs</strong> (<em>list of Projection</em>) – a list of projection objects (may be empty)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="maxfilter.erm_filter_bands">
+<span class="sig-name descname"><span class="pre">erm_filter_bands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">erm_raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">erm_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#maxfilter.erm_filter_bands" title="Link to this definition"></a></dt>
+<dd><p>If not already done, filter ERM recording to bands relevant to artifact
+rejections, and save filtered data as separate .fif files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>erm_raw</strong> (<em>MNE Raw</em>) – as is</p></li>
+<li><p><strong>erm_fif</strong> (<em>Path</em>) – full pathname of ERM .fif file</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the maxfilter step configuration dictionary</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong> – filtered versions of the original ERM file are saved as .fif
+files to the same folder where <cite>erm_fif</cite> resides.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="maxfilter.find_bads">
+<span class="sig-name descname"><span class="pre">find_bads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_talk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#maxfilter.find_bads" title="Link to this definition"></a></dt>
+<dd><p>Construct a list of flat and bad channels using MNE’s <cite>find_bad_channels_maxwell()</cite>
+utility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>MNE Raw</em>) – dataset Raw object</p></li>
+<li><p><strong>fname</strong> (<em>Path</em>) – input .fif file pathname. If both <cite>raw</cite> and
+<cite>fname</cite> are given, the <cite>raw</cite> argument will be used</p></li>
+<li><p><strong>calibration</strong> (<em>str</em><em> | </em><em>None</em>) – path to the ‘.dat’ file with fine
+calibration coefficients</p></li>
+<li><p><strong>cross_talk</strong> (<em>str</em><em> | </em><em>None</em>) – path to the FIF file with cross-talk
+correction information.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – dictionary with arguments for the
+<cite>find_bad_channels_maxwell()</cite> call (except <cite>calibraion</cite>, <cite>cross_talk</cite>
+and <cite>verbose</cite>)</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE’s verbose level.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>raw</strong> (<em>MNE Raw</em>) – as is</p></li>
+<li><p><strong>bads</strong> (<em>list of str</em>) – a list of identified bad and flat channels</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="maxfilter.maxfilter">
+<span class="sig-name descname"><span class="pre">maxfilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#maxfilter.maxfilter" title="Link to this definition"></a></dt>
+<dd><p>Top level function for the Maxwell filtering step. The following
+substeps are performed here. First, bad and flat channels are identified.
+Second, presense of a vibrational artifact is determined and
+corresponding out-projectors are calculated.
+Third, tSSS or eSSS is applied depending on the vibrational artifact
+presence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="maxfilter.remove_bad">
+<span class="sig-name descname"><span class="pre">remove_bad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_talk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#maxfilter.remove_bad" title="Link to this definition"></a></dt>
+<dd><p>Identify and remove flat and bad channels using MNE’s
+<cite>find_bad_channels_maxwell()</cite> utility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>MNE Raw</em>) – dataset Raw object</p></li>
+<li><p><strong>fname</strong> (<em>Path</em>) – input .fif file pathname. If both <cite>raw</cite> and
+<cite>fname</cite> are given, the <cite>raw</cite> argument will be used</p></li>
+<li><p><strong>calibration</strong> (<em>str</em><em> | </em><em>None</em>) – path to the ‘.dat’ file with fine
+calibration coefficients</p></li>
+<li><p><strong>cross_talk</strong> (<em>str</em><em> | </em><em>None</em>) – path to the FIF file with cross-talk
+correction information.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – dictionary with arguments for the
+<cite>find_bad_channels_maxwell()</cite> call (except <cite>calibraion</cite>, <cite>cross_talk</cite>
+and <cite>verbose</cite>)</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE’s verbose level.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>raw</strong> (<em>MNE Raw</em>) – updated raw with identified bad and flat channels
+added to raw.info[‘bads’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-do_ica">
+<span id="do-ica-py"></span><h2>do_ica.py<a class="headerlink" href="#module-do_ica" title="Link to this heading"></a></h2>
+<p><strong>Perform ECG and EOG artifacts removal using ICA.</strong></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="do_ica.do_ica">
+<span class="sig-name descname"><span class="pre">do_ica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#do_ica.do_ica" title="Link to this definition"></a></dt>
+<dd><p>To do the ICA based artifact removal, the following steps are performed.
+First, EOG and ECG channels are filtered to respective (generally different)
+frequency bands. Then ICA model is fit to the data. Finally, ICs related to
+EOG or ECG channels are removed. Original (unfiltered) versions of the EOG
+and ECG channels are preserved in the output data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="do_ica.ica_raw">
+<span class="sig-name descname"><span class="pre">ica_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#do_ica.ica_raw" title="Link to this definition"></a></dt>
+<dd><p>Perform ICA artifact removal for a single Raw record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>MNE Raw</em>) – the input dataset to be processed in place</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the <cite>ica</cite> step config dictionary</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>raw</strong> (<em>MNE Raw</em>) – the input dataset modified in place</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-bem_model">
+<span id="bem-model-py"></span><h2>bem_model.py<a class="headerlink" href="#module-bem_model" title="Link to this heading"></a></h2>
+<p>** Perform all necessary steps to create a BEM based head conductor
+model, including:</p>
+<p>Creating BEM surfaces (requires FreeSurfer software installed), BEM model and
+BEM solution construction; source space setup.**</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.bem_model">
+<span class="sig-name descname"><span class="pre">bem_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.bem_model" title="Link to this definition"></a></dt>
+<dd><p>Perform all necessary steps to produce a BEM head conductor model and
+a source space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.bem_sol_pathname">
+<span class="sig-name descname"><span class="pre">bem_sol_pathname</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.bem_sol_pathname" title="Link to this definition"></a></dt>
+<dd><p>Construct a full pathname to subject’s BEM solution file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>data_host</strong> (<a class="reference internal" href="#setup_utils.DataHost" title="setup_utils.DataHost"><em>DataHost</em></a>) – the DataHost object instance</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the <cite>bem_model</cite> step config dictionary</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>pathname</strong> (<em>Path</em>) – full pathname of the BEM solution file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.bem_solution_fif">
+<span class="sig-name descname"><span class="pre">bem_solution_fif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ico_bem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlayers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.bem_solution_fif" title="Link to this definition"></a></dt>
+<dd><p>Return a basename for a BEM solution .fif file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>ico_bem</strong> (<em>int</em>) – ico setting for BEM model: 3 (coarse), 4 (medium),
+or 5 (dense)</p></li>
+<li><p><strong>nlayers</strong> (<em>int</em>) – number of layers in the conductivity model</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fname</strong> (<em>str</em>) – basename for the BEM solution .fif file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.construct_bem_solution">
+<span class="sig-name descname"><span class="pre">construct_bem_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.construct_bem_solution" title="Link to this definition"></a></dt>
+<dd><p>Make subject’s BEM model and BEM solution and save those to the subject’s
+BEM folder. If BEM solution already exists, it will only be recreated if
+‘recalc_bem’ flag is set in the pipeline setup JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>data_host</strong> (<a class="reference internal" href="#setup_utils.DataHost" title="setup_utils.DataHost"><em>DataHost</em></a>) – the DataHost object instance</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the <cite>bem_model</cite> step config dictionary</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Nothing, but BEM solution file is created in the subject’s BEM folder.</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.construct_source_space">
+<span class="sig-name descname"><span class="pre">construct_source_space</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.construct_source_space" title="Link to this definition"></a></dt>
+<dd><p>Given that BEM solution is available, construct surface or volume source
+space for the subject and save it in the subject’s BEM folder. If source space
+already exists, it will only be recreated if ‘recalc_bem’ flag is set in
+the pipeline setup JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>data_host</strong> (<a class="reference internal" href="#setup_utils.DataHost" title="setup_utils.DataHost"><em>DataHost</em></a>) – the DataHost object instance</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the <cite>bem_model</cite> step config dictionary</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Nothing, but source space .fif file is created in the subject’s BEM folder.</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.make_bem_surfaces">
+<span class="sig-name descname"><span class="pre">make_bem_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.make_bem_surfaces" title="Link to this definition"></a></dt>
+<dd><p>Run the watershed algorithm to create BEM surfaces. Needs FreeSurfer-generated
+brain and skull surfaces, and a runnable FreeSurfer instance. If the
+BEM surfaces already exist in subject’s <cite>bem</cite> folder, they will be
+recreated if <cite>recalc_bem</cite> flag is set in the pipeline setup JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>data_host</strong> (<a class="reference internal" href="#setup_utils.DataHost" title="setup_utils.DataHost"><em>DataHost</em></a>) – the DataHost object instance</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the <cite>bem_model</cite> step config dictionary</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Nothing</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.make_scalp_surfaces">
+<span class="sig-name descname"><span class="pre">make_scalp_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.make_scalp_surfaces" title="Link to this definition"></a></dt>
+<dd><p>Create scalp surfaces, needed for MEG-MRI coregistraion as per MNE Python
+docs. Needs FreeSurfer-generated brain and skull surfaces, and a runnable
+FreeSurfer instance. If the the target surfaces already exist in subject’s
+<cite>bem</cite> folder, they will be recreated if <cite>recalc_bem</cite> flag is set in the
+pipeline setup JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>data_host</strong> (<a class="reference internal" href="#setup_utils.DataHost" title="setup_utils.DataHost"><em>DataHost</em></a>) – the DataHost object instance</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – the <cite>bem_model</cite> step config dictionary</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Nothing</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bem_model.src_space_fif">
+<span class="sig-name descname"><span class="pre">src_space_fif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ico_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_volume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bem_model.src_space_fif" title="Link to this definition"></a></dt>
+<dd><p>Return a basename for a source space .fif file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>step</strong> (<em>float</em>) – grid step (m) for volume source spaces</p></li>
+<li><p><strong>ico_src</strong> (<em>int</em>) – ico setting for the surface source spaces: 3 (coarse), 4 (medium),
+or 5 (dense)</p></li>
+<li><p><strong>is_volume</strong> (<em>bool</em>) – True if a volume source space is meant; otherwise
+a surface source space is assumed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fname</strong> (<em>str</em>) – basename for the BEM solution .fif file</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src_rec">
+<span id="src-rec-py"></span><h2>src_rec.py<a class="headerlink" href="#module-src_rec" title="Link to this heading"></a></h2>
+<p><strong>Perform automatic MRI/HEAD coordinate systems coregistration
+and beamformer source reconstruction</strong></p>
+<p>NOTE that this code uses external beamformer reconstruction routines located
+in folder <cite>beam_python</cite>. This folder is expected to be found at the same level
+of the files hierarchy as a folder with this source file.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.beam_extract_label_time_course">
+<span class="sig-name descname"><span class="pre">beam_extract_label_time_course</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sensor_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pca_flip'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.beam_extract_label_time_course" title="Link to this definition"></a></dt>
+<dd><p>Compute spatial filter weights and time courses for ROIs (labels) using beamformer
+inverse solutions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sensor_data</strong> (<em>ndarray</em>) – <cite>nchan x ntimes</cite> or <cite>nepochs x nchan x ntimes</cite>; M/EEG channels
+time courses for non-epoched or epoched data, respectively</p></li>
+<li><p><strong>cov</strong> (<em>ndarray</em>) – nchan x nchan; the sensor time courses covariance matrix</p></li>
+<li><p><strong>labels</strong> (<em>list</em>) – a list of mne.Label objects for the ROIs</p></li>
+<li><p><strong>fwd</strong> (<em>mne.Forward</em>) – forward solutions</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em>) – nchan x nsrc; beamformer weights for the whole (global) source space</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – a method of constructing a single time course for the ROI; see description
+of <cite>mne.extract_label_time_course()</cite> function</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – verbose mode</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>label_tcs</strong> (<em>ndarray</em>) – <cite>nlabels x ntimes</cite> or <cite>nepochs x nlabels x ntimes</cite> for non-epoched
+or epoched data, respectively; ROI time courses</p></li>
+<li><p><strong>label_wts</strong> (<em>ndarray</em>) – nchan x nlabels; spatial filter weights for each label</p></li>
+<li><p><strong>is_epochs</strong> (<em>Bool</em>) – <cite>True</cite> if epoched source time courses are returned</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.beamformer_stc_continuous">
+<span class="sig-name descname"><span class="pre">beamformer_stc_continuous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_stc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rcond</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.beamformer_stc_continuous" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct source time courses for continuous data using the single source
+minimum variance beamformer.</p>
+<p>IMPORTANT: if <cite>picks</cite> specifies only a subset of channels available in the forward
+solution <cite>fwd</cite>, <strong>`fwd` object will be modified in place</strong> as channels not included
+in <cite>picks</cite> will be dropped.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw</strong> (<em>mne.Raw</em>) – the raw data; it is expected to contain only
+those sensor channels that will be used to perform beamforming</p></li>
+<li><p><strong>fwd</strong> (<em>mne.Forward</em>) – forward solutions; note that those may include all meg channels,
+not only those specified by <cite>picks</cite> parameter</p></li>
+<li><p><strong>return_stc</strong> (<em>bool</em>) – flag to compute all source time courses and to return
+corresponding SourceEstimate object</p></li>
+<li><p><strong>units</strong> (<em>str</em>) – either “source” or “pz”, to obtain timecourses in A*m or amplitude
+pseudo-Z, respectively. Note that in the 1st case source amplitudes will grow
+large for deep sources.</p></li>
+<li><p><strong>tol</strong> (<em>float &gt; 0</em>) – tolerance (relative accuracy) in finding the noise_cov trace.</p></li>
+<li><p><strong>rcond</strong> (<em>float &gt; 0</em>) – condition for determining rank of the covariance matrix:
+singular values less than <cite>max(sing val) * rcond</cite> will be considered zero.</p></li>
+<li><p><strong>verbose</strong> (<em>str</em><em> or </em><em>None</em>) – verbose mode (see MNE docs for details)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>stc</strong> (<em>mne.SourceEstimate or None</em>) – source estimate (reconstructed source time courses),
+provided return_stc flag is True; None otherwise</p></li>
+<li><p><strong>sensor_data</strong> (<em>ndarray</em>) – <cite>nchan x ntimes</cite>; M/EEG channels time courses</p></li>
+<li><p><strong>data_cov</strong> (<em>ndarray</em>) – <cite>nchan x nchan</cite>, sensor covariance matrix adjusted to a nearest
+positive definite matrix</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em>) – <cite>nchan x nsrc</cite> array of beamformer weights</p></li>
+<li><p><strong>U</strong> (<em>ndarray</em>) – <cite>3 x nsrc</cite> array of source orientations</p></li>
+<li><p><strong>pz</strong> (<em>float</em>) – data’s pseudo-Z found as <cite>pz = trace(R)/tr(N)</cite>, where <cite>N</cite> is the noise covariance</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.beamformer_stc_epochs">
+<span class="sig-name descname"><span class="pre">beamformer_stc_epochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.beamformer_stc_epochs" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct source time courses for epoched data using the single source
+minimum variance beamformer.</p>
+<p>IMPORTANT: if epochs contain only a subset of channels available in the forward
+solution <cite>fwd</cite>, <strong>`fwd` object will be modified in place</strong> as channels not included
+in <cite>epochs</cite> will be dropped.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epochs</strong> (<em>Epochs</em>) – as is - MNE Epochs object; it is expected to contain only
+those sensor channels that will be used to perform beamforming</p></li>
+<li><p><strong>fwd</strong> (<em>Forward</em>) – MNE forward solutions object; note fwd typically includes all
+meg channels in the system (including bad ones)</p></li>
+<li><p><strong>inv_cov</strong> (<em>ndarray</em>) – nchan x nchan (pseudo-)inverse of sensor cov matrix</p></li>
+<li><p><strong>noise_cov</strong> (<em>ndarray</em>) – nchan x nchan noise cov matrix</p></li>
+<li><p><strong>pz</strong> (<em>float</em>) – pseudo-Z of the epochs data, calculated as <cite>tr(R)/tr(N)</cite>, where
+<cite>R</cite>, <cite>N</cite> are data and noise covariance matrices.</p></li>
+<li><p><strong>units</strong> (<em>str</em>) – either “source” or “pz”</p></li>
+<li><p><strong>verbose</strong> (<em>str</em><em> or </em><em>None</em>) – verbose mode (see MNE docs for details)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>sensor_data</strong> (<em>ndarray</em>) – <cite>n_epochs x nchan x ntimes</cite>; MEG channels time courses</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em>) – <cite>nchan x nsrc</cite> array of beamformer weights. For any epoch number
+<cite>i</cite>, corresponding source time courses can be found as
+<cite>src_epoch = W.T &#64; sensor_data[i,:,:]</cite></p></li>
+<li><p><strong>U</strong> (<em>ndarray</em>) – <cite>3 x nsrc</cite> array of source orientations</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.construct_noise_and_inv_cov">
+<span class="sig-name descname"><span class="pre">construct_noise_and_inv_cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_cov</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rcond</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.construct_noise_and_inv_cov" title="Link to this definition"></a></dt>
+<dd><p>Based on the forward solutions, construct sensor-level noise covariance
+matrix assuming white, randomly oriented uncorrelated sources. Also calculate
+pseudo-inverse of the data cov and SNR.</p>
+<p>The basic expression for noise covariance is:</p>
+<p><cite>cov0 = const * SUM(i=1 to Nsrc){Hx Hx’ + Hy Hy’ + Hz Hz’}</cite></p>
+<p>where <cite>Hx,y,z(i)</cite> are forward solutions for i-th source with corresponding
+orientations, and <cite>const</cite> is defined so as data_cov - noise_cov is non-negative.</p>
+<p>For degenerate data_cov the noise_cov should also be degenerate with a
+range subspace coinciding with the range of the data_cov. In this case the
+above expression should be replaced with</p>
+<p><cite>cov = P * cov0 * P</cite></p>
+<p>where <cite>P = data_cov * pinv(data_cov)</cite> is a projector on the <cite>range(data_cov)</cite>.</p>
+<p>The trace of the noise_cov is maximized while keeping the difference
+<cite>data_cov - noise_cov</cite> non-negative. The tol parameter defines how close to
+the upper boundary one should get.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fwd</strong> (<em>Forward</em>) – mne Python forward solutions class</p></li>
+<li><p><strong>data_cov</strong> (<em>ndarray</em>) – nchan x nchan data covariance matrix</p></li>
+<li><p><strong>tol</strong> (<em>float &gt; 0</em>) – tolerance in finding the noise_cov trace.</p></li>
+<li><p><strong>rcond</strong> (<em>float &gt; 0</em>) – singular values less than max(sing val) * rcond will
+be dropped</p></li>
+<li><p><strong>max_rank</strong> (<em>int&gt;0</em><em> | </em><em>None</em>) – if specified, sets the upper bound for rank of
+the covariance. The upper bound may be known if data is max-filtered.
+In this case, any computed rank larger than max_rank will be incorrect.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>cov</strong> (<em>ndarray</em>) – (nchan x nchan) noise cov matrix, such that the difference
+data_cov - noise_cov is non-negatively defined</p></li>
+<li><p><strong>inv_cov</strong> (<em>ndarray</em>) – (nchan x nchan) (pseudo-) inverse of the data cov</p></li>
+<li><p><strong>rank</strong> (<em>int</em>) – rank of the data covariance</p></li>
+<li><p><strong>pz</strong> (<em>float</em>) – psedo-Z = SNR + 1 of the data; <cite>pz=tr(data_cov)/tr(noise_cov)</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.coregister_mri">
+<span class="sig-name descname"><span class="pre">coregister_mri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subjects_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.coregister_mri" title="Link to this definition"></a></dt>
+<dd><p>Perform automated HEAD - MRI coordinate systems coregistration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>dict</em>) – coregistration sub-step configuration dictionary</p></li>
+<li><p><strong>info</strong> (<em>mne.Info</em>) – the info object corresponding to the input raw .fif file</p></li>
+<li><p><strong>subject</strong> (<em>str</em>) – subject ID on MEG side</p></li>
+<li><p><strong>subjects_dir</strong> (<em>Path</em>) – path to the root of FreeSurfer subjects folder</p></li>
+<li><p><strong>trans_fif</strong> (<em>Path</em>) – full pathname of .fif file to save the transformation</p></li>
+<li><p><strong>show_plots</strong> (<em>bool</em>) – flag to show the coregistration plot</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>None, but transformation .fif file is saved in this step’s subject output</strong></p></li>
+<li><p><strong>folder.</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_beam_weights">
+<span class="sig-name descname"><span class="pre">get_beam_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">H</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_beam_weights" title="Link to this definition"></a></dt>
+<dd><p>Get beamformer weights matrix for a set of forward solutions</p>
+<p>For each source, calculate a scalar beamformer weight using a formula</p>
+<p><cite>w = const * R^(-1) h; h = [Hx, Hy, Hz]*u</cite></p>
+<p>where <cite>R</cite> is the data covariance matrix, <cite>h</cite> is a “scalar” lead field corresponding
+to the source orientation <cite>u</cite>. The normalization constant is selected depending
+on the <cite>units</cite> parameter setting:</p>
+<p><cite>units = “source”: const = (h’ R^(-1) h)^(-1)</cite></p>
+<p><cite>units = “pz”:     const = [h’ R^(-1) N R^(-1) h]^(-1/2)</cite></p>
+<p>In the first case absolute current dipole amplitudes (A*m) will be reconstructed.
+In the 2nd case source amplitudes will be normalized on projected noise, effectively
+representing source-level signal to noise ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>H</strong> (<em>ndarray</em>) – nchan x (3*n_src) array of FS for a set of n_src sources</p></li>
+<li><p><strong>inv_cov</strong> (<em>ndarray</em>) – nchan x nchan (pseudo-)inverse of sensor cov matrix</p></li>
+<li><p><strong>noise_cov</strong> (<em>ndarray</em>) – nchan x nchan noise cov matrix</p></li>
+<li><p><strong>units</strong> (<em>str</em>) – either “source” or “pz”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>W</strong> (<em>ndarray</em>) – nchan x nsrc array of beamformer weights</p></li>
+<li><p><strong>U</strong> (<em>ndarray</em>) – 3 x nsrc array of source orientations</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_forward_solutions">
+<span class="sig-name descname"><span class="pre">get_forward_solutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwd_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bem_sol_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_forward_solutions" title="Link to this definition"></a></dt>
+<dd><p>Get forward solutions for the given MEG .fif record.
+Those are (re)calculated if not already present in the output
+folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>dict</em>) – this step configuration dictionary</p></li>
+<li><p><strong>in_fif</strong> (<em>Path</em>) – input .fif file pathname</p></li>
+<li><p><strong>trans_fif</strong> (<em>Path</em>) – HEAD-&gt;MRI transformation .fif file pathname</p></li>
+<li><p><strong>fwd_fif</strong> (<em>Path</em>) – forward solutions .fif file pathname, to
+save to or to read from</p></li>
+<li><p><strong>ss_fif</strong> (<em>Path</em>) – source space .fif file pathname</p></li>
+<li><p><strong>bem_sol_fif</strong> (<em>Path</em>) – BEM solution .fif file pathname</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fwd</strong> (<em>Forward</em>) – an instance for MNE Forward class</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_fwd_input_fifs">
+<span class="sig-name descname"><span class="pre">get_fwd_input_fifs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fif</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_fwd_input_fifs" title="Link to this definition"></a></dt>
+<dd><p>Return full Path objects for .fif files needed for forward solutions
+calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>out_fif</strong> (<em>Path</em>) – output .fif file pathname</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lst_fifs</strong> (<em>list of Path</em>) – list of Path objects as <cite>(fwd_fif, ss_fif, bem_sol_fif)</cite>
+for forward solutions file, source space file and BEM solution file,
+respectively.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_label_coms">
+<span class="sig-name descname"><span class="pre">get_label_coms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_label_coms" title="Link to this definition"></a></dt>
+<dd><p>Calculate center-of-mass vertices for ROIs
+assuming that all vertices in ROI have identical weights.</p>
+<p>The ROIs are defined on the ‘fsaverage’ subject’s original
+(that is - dense) cortical surface. So are the returned
+COM vertex numbers.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the labels were restricted to a source space using
+a coarser surface than the original FreeSurfer surface, the
+returned COMs will also be vertices of this coarser surface.
+Still the vertex numbers themselves refer to the original
+dense surface. Importantly, “restricted” labels may sometimes
+have their <cite>vertices</cite> lists empty. In this case, <strong>an exception
+will be thrown</strong>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>labels</strong> (<em>list</em><em> of </em><em>Label</em>) – list of MNE Label objects</p></li>
+<li><p><strong>mri_subj</strong> (<em>str</em>) – subject ID on MRI side</p></li>
+<li><p><strong>fs_dir</strong> (<em>str</em>) – pathname to the FreeSurfer subjects directory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>label_coms</strong> (<em>ndarray</em>) – 1D signed integer array for COM vertex numbers, with
+NEGATIVE numbers referring to the LEFT hemisphere, and non-negative
+(including 0) - to the right hemisphere. Negative vertex with number
+_LEFT_HEMI_ZERO is interpreted as vertex 0 of the left hemisphere.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_label_pca_weight">
+<span class="sig-name descname"><span class="pre">get_label_pca_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_label_pca_weight" title="Link to this definition"></a></dt>
+<dd><p>Return a spatial filter vector <cite>w_pca</cite> such that a single label
+(ROI) time course can be found by the expression <cite>w_pca’*b(t)</cite>, where
+<cite>b</cite> is a vector of sensor time courses.</p>
+<p><em>Explanation</em>. Covariance matrix of all signals that belong to a label is
+<cite>R_label = W_label’* R * W_label</cite>, where R is the global sensor covariance and
+<cite>W_label = nchan x n_label_src</cite> are label weights.
+Let <cite>U0 = n_label_src x 1</cite> be the largest normalized eigenvector of R_label.
+Then label time course <cite>s(t)</cite> corresponding to ‘pca_flip’ mode is found as</p>
+<p><cite>s(t) = sign * scale * U0’ * W_label’ * b(t)</cite>,</p>
+<p>where</p>
+<p><cite>scale = sqrt[(trace(R_label)/E0)/n_label_src]</cite>,
+<cite>sign = np.sign(U0’*flip)</cite></p>
+<p>E0 is the largest eigenvalue of R_label and <cite>flip</cite> is a flip-vector returned by
+MNE <cite>label_sign_flip()</cite> function. This scaling assigns the RMS of the powers
+of all ROI sources to the returned single time course amplitude. Then it is
+clear that the expression for <cite>w_pca</cite> is:</p>
+<p><cite>w_pca = sign * scale * W_label * U0, w_pca = nchan x 1</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>R</strong> (<em>ndarray</em>) – nchan x nchan, the global sensor data covariance matrix</p></li>
+<li><p><strong>fwd</strong> (<em>mne.Forward</em>) – the forward solutions object for the whole source space</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em>) – nchan x nsrc, weights matrix for the whole source space</p></li>
+<li><p><strong>label</strong> (<em>mne.Label</em>) – the <cite>Label</cite> object for the ROI</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>w_pca</strong> (<em>ndarray</em>) – nchan x 1 weight vector for the ROI</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_label_src_idx">
+<span class="sig-name descname"><span class="pre">get_label_src_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_label_src_idx" title="Link to this definition"></a></dt>
+<dd><p>Get source indecies for a label (ROI)</p>
+<p>Forward solution matrices H and weight matrices W have
+columns (or triplets of columns) corresponding to sources
+in the whole (left + right hemisphere) source space. At the
+same time, the SourceSpaces object has separate source indexing
+for each hemisphere, and so does the ROI (label). This function
+returns a mapping from label vertices to columns of scalar H and
+scalar W.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fwd</strong> (<em>mne.Forward</em>) – the global <cite>Forward</cite> object</p></li>
+<li><p><strong>label</strong> (<em>mne.Label</em>) – the <cite>Label</cite> object for the ROI</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>idx</strong> (<em>1D array of ints</em>) – n_label_src-dimensional vector of indecies</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_label_wts">
+<span class="sig-name descname"><span class="pre">get_label_wts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_label_wts" title="Link to this definition"></a></dt>
+<dd><p>Get a subset of spatial filter weights corresponding to specified Label (ROI)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fwd</strong> (<em>mne.Forward</em>) – the global <cite>Forward</cite> object</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em>) – nchan x nsrc, weights matrix for the whole source space</p></li>
+<li><p><strong>label</strong> (<em>mne.Label</em>) – the <cite>Label</cite> object for the ROI</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>W_label</strong> (<em>ndarray</em>) – nchan x (n_label_src) array of ROI weights</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_labels">
+<span class="sig-name descname"><span class="pre">get_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meg_subject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_labels" title="Link to this definition"></a></dt>
+<dd><p>Read MRI atlas Regions Of Interest (ROIs), or ‘labels’ in MNE Python terms for the subject.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meg_subject</strong> (<em>str</em>) – subject ID on MEG side</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – this step configuration dictionary</p></li>
+<li><p><strong>data_host</strong> (<a class="reference internal" href="#setup_utils.DataHost" title="setup_utils.DataHost"><em>DataHost</em></a>) – reference to <cite>setup_utils.DataHost</cite> object</p></li>
+<li><p><strong>fwd</strong> (<em>Forward</em>) – the forward solutions object</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>labels</strong> (<em>list of Label</em>) – a list of ROI labels (constrained to the source space
+vertices)</p></li>
+<li><p><strong>label_coms_vtc</strong> (<em>ndarray of ints</em>) – 1D array of COM vertex numbers encoded as
+described in <cite>write_roi_time_courses()</cite></p></li>
+<li><p><strong>label_coms_rr</strong> (<em>ndarray</em>) – shape (nlabels, 3) coordinates of ROIs COMs (centers of
+mass) in the coordinate system used by the forward solutions (typically,
+the head coordinate system)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.get_voxel_coords">
+<span class="sig-name descname"><span class="pre">get_voxel_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.get_voxel_coords" title="Link to this definition"></a></dt>
+<dd><p>Given vertex numbers, return voxel spatial coordinates for
+a surface source space.</p>
+<p>NOTE: the coordinate system is that of the source space; it may be
+either MRI or head coordinate system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>mne.SourceSpaces</em>) – as is</p></li>
+<li><p><strong>vertices</strong> (<em>ndarray</em>) – 1D signed integer array for COM vertex numbers, with
+NEGATIVE numbers referring to the LEFT hemisphere, and non-negative
+(including 0) - to the right hemisphere. Negative vertex with number
+_LEFT_HEMI_ZERO is interpreted as vertex 0 of the left hemisphere.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>rr</strong> (<em>ndarray</em>) – nvox x 3; coordinates of vertices. <cite>nvox = len(vertices)</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.read_roi_time_courses">
+<span class="sig-name descname"><span class="pre">read_roi_time_courses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltc_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.read_roi_time_courses" title="Link to this definition"></a></dt>
+<dd><p>Read ROI (label) time courses and corresponding ROI names from .hdf5
+file.</p>
+<p>When vertex numbers of the left and right hemispheres of surface source spaces need to
+be joined in a single <cite>vertno</cite> array, the following encoding scheme is used. <cite>vertno</cite>
+is expected to be a 1D signed integer array with NEGATIVE numbers referring to the
+LEFT hemisphere, and NON-NEGATIVE (including 0) numbers referring to the RIGHT
+hemisphere. A negative vertex with number <cite>_LEFT_HEMI_ZERO</cite> is interpreted as vertex
+0 of the left hemisphere.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ltc_file</strong> (<em>Path</em><em> | </em><em>str</em>) – full pathname of the output .hdf5 file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>label_tcs</strong> (<em>ndarray</em>) – <cite>nlabels x ntimes</cite> or <cite>nepochs x nlabels x ntimes</cite> for non-epoched
+or epoched data, respectively; ROI time courses</p></li>
+<li><p><strong>label_names</strong> (<em>ndarray of str</em>) – 1 x nlabels vector of ROI names</p></li>
+<li><p><strong>vertno</strong> (<em>ndarray or None</em>) – 1D signed integer array of vertex numbers corresponding
+to the ROI COMs. See above regarding the vertex numbers encoding rules.</p></li>
+<li><p><strong>rr</strong> (<em>ndarray or None</em>) – nlabels x 3; coordinates of ROI reference locations
+in head coordinates</p></li>
+<li><p><strong>W</strong> (<em>ndarray or None</em>) – nchans x nlabels; spatial filter weights for each ROI.
+Those can be used to reconstruct ROI time courses as <cite>W.T &#64; sensor_data</cite></p></li>
+<li><p><strong>pz</strong> (<em>float or None</em>) – data’s pseudo-Z found as <cite>pz = trace(R)/tr(N)</cite>,
+where <cite>N</cite> is the noise covariance</p></li>
+<li><p><strong>events</strong> (<em>ndarray | list of ndarray</em>) – <cite>nevents x 3</cite> or <cite>[events1,…,eventsK,…]</cite>;
+events array in MNE Python ‘events’ format for non-epoched data, or a list
+of such arrays for epoched data, respectively. Note that in the latter case
+the event sample index is counted from the start of the epoch (not from the trigger)</p></li>
+<li><p><strong>events_id_dict</strong> (<em>dict</em>) – dictionary event_descr -&gt; event_id; see <cite>event_id</cite> parameter
+description of the MNE <cite>Epochs</cite> object constructor</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.set_source_orientation_signs">
+<span class="sig-name descname"><span class="pre">set_source_orientation_signs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.set_source_orientation_signs" title="Link to this definition"></a></dt>
+<dd><p>Due to ambiguity of a sign of the scalar beamformer-reconstructed source orientation,
+orientations of adjacent vertices may be flipped randomly. This function properly
+aligns those orientations. For surface-based source spaces this is done by keeping
+source orientation less than 90 degrees with respect to the surface normals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fwd</strong> (<em>mne.Forward</em>) – forward solutions</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em>) – shape <cite>(nchan, nsrc)</cite>, the original array of the beamformer weights</p></li>
+<li><p><strong>U</strong> (<em>ndarray</em>) – shape <cite>(3, nsrc)</cite>, the original array of source orientations</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>W</strong> (<em>ndarray</em>) – <cite>(nchan, nsrc)</cite>- the sign-corrected beamformer weights</p></li>
+<li><p><strong>U</strong> (<em>ndarray</em>) – <cite>(3, nsrc)</cite>- the sign-corrected source orientations</p></li>
+<li><p><strong>vertices</strong> (<em>lst of lst</em>) – a list of two lists, corresponding to source space
+vertex numbers for left and right hemisphere, respectively.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.src_rec">
+<span class="sig-name descname"><span class="pre">src_rec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.src_rec" title="Link to this definition"></a></dt>
+<dd><p>Perform beamformer source reconstruction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_rec.write_roi_time_courses">
+<span class="sig-name descname"><span class="pre">write_roi_time_courses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltc_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_tcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertno</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">events_id_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src_rec.write_roi_time_courses" title="Link to this definition"></a></dt>
+<dd><p>Save ROI (label) time courses and related data in .hdf5
+file.</p>
+<p>The output file will contain at least two datasets with names ‘label_tcs’ and
+‘label_names’. If provided, ROI centers of mass (COMs) vertex numbers
+on the FreeSurface’s <cite>fsaverage</cite> cortex surface, ROI COMs in MRI coordinates,
+ROI spatial filter weights and the MEG record overall pseudo-Z will also be saved.</p>
+<p>When supplied, ‘events’ array and corresponding ‘event_id’ dictionary will be saved
+in the datasets named ‘events’, ‘events_id_dict’ respectively.
+Note that events_id_dict is saved as a JSON string corresponding to this dictionary
+object.</p>
+<p>When vertex numbers of the left and right hemispheres of surface source spaces need to
+be joined in a single <cite>vertno</cite> array, the following encoding scheme is used. <cite>vertno</cite>
+is expected to be a 1D signed integer array with NEGATIVE numbers referring to the
+LEFT hemisphere, and NON-NEGATIVE (including 0) numbers referring to the RIGHT
+hemisphere. A negative vertex with number <cite>_LEFT_HEMI_ZERO</cite> is interpreted as vertex
+0 of the left hemisphere.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ltc_file</strong> (<em>Path</em><em> | </em><em>str</em>) – full pathname of the output .hdf5 file</p></li>
+<li><p><strong>label_tcs</strong> (<em>ndarray</em>) – <cite>nlabels x ntimes</cite> or <cite>nepochs x nlabels x ntimes</cite> for non-epoched
+or epoched data, respectively; ROI time courses</p></li>
+<li><p><strong>label_names</strong> (<em>list</em><em> of </em><em>str</em>) – names of ROIs</p></li>
+<li><p><strong>vertno</strong> (<em>ndarray</em><em> or </em><em>None</em>) – 1D signed integer array of vertex numbers corresponding
+to the ROI COMs. See above regarding the vertex numbers encoding rules.</p></li>
+<li><p><strong>rr</strong> (<em>ndarray</em><em> or </em><em>None</em>) – nlabels x 3; coordinates of ROI reference locations
+in head coordinates</p></li>
+<li><p><strong>W</strong> (<em>ndarray</em><em> or </em><em>None</em>) – nchans x nlabels; spatial filter weights for each ROI.
+Those can be used to reconstruct ROI time courses as <cite>W.T &#64; sensor_data</cite></p></li>
+<li><p><strong>pz</strong> (<em>float</em><em> or </em><em>None</em>) – data’s pseudo-Z found as <cite>pz = trace(R)/tr(N)</cite>,
+where <cite>N</cite> is the noise covariance.</p></li>
+<li><p><strong>events</strong> (<em>ndarray</em><em> | </em><em>list</em><em> of </em><em>ndarray</em>) – <cite>nevents x 3</cite> or <cite>[events1,…,eventsK,…]</cite>;
+events array in MNE Python ‘events’ format for non-epoched data, or a list
+of such arrays for epoched data, respectively. Note that in the latter case
+the event sample index is counted from the start of the epoch (not from the trigger)</p></li>
+<li><p><strong>events_id_dict</strong> (<em>dict</em>) – dictionary event_descr -&gt; event_id; see <cite>event_id</cite> parameter
+description of the MNE <cite>Epochs</cite> object constructor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-epochs">
+<span id="epochs-py"></span><h2>epochs.py<a class="headerlink" href="#module-epochs" title="Link to this heading"></a></h2>
+<p><strong>Event-related data processing routines</strong></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="epochs.construct_epochs">
+<span class="sig-name descname"><span class="pre">construct_epochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_events</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#epochs.construct_epochs" title="Link to this definition"></a></dt>
+<dd><p>Construct epochs based on specified events subset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>raw</strong> (<em>Raw</em>) – raw object representing continuous data, with only good
+sensor channels</p></li>
+<li><p><strong>all_events</strong> (<em>ndarray</em>) – (n_events,3) MNE events array from the original
+(full) raw object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>epochs</strong> (<em>Epochs</em>) – the Epochs object</p></li>
+<li><p><strong>events_per_epoch</strong> (<em>list of ndarray</em>) – a list of events arrays for
+each epochs. Note that the event sample index is counted from
+the start of the epoch (not from the trigger)</p></li>
+<li><p><strong>data_Cov</strong> (<em>Covariance</em>) – MNE Covariance object for the active interval covariance</p></li>
+<li><p><strong>noise_Cov</strong> (<em>Covariance</em>) – MNE Covariance object for the control interval covariance</p></li>
+<li><p><strong>inv_cov</strong> (<em>ndarray</em>) – (nchan x nchan) (pseudo-) inverse of the data (active interval)
+covariance</p></li>
+<li><p><strong>rank</strong> (<em>int</em>) – rank of the data covariance</p></li>
+<li><p><strong>pz</strong> (<em>float</em>) – psedo-Z = SNR + 1 of the data; <cite>pz=tr(data_cov)/tr(noise_cov)</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="epochs.epochs_noise_and_inv_cov">
+<span class="sig-name descname"><span class="pre">epochs_noise_and_inv_cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#epochs.epochs_noise_and_inv_cov" title="Link to this definition"></a></dt>
+<dd><p>For epoched data, calculate: full (or data) covariance, which is the sensor covariance
+on active interval; noise covariance, which is the sensor covariance on
+control interval; (pseudo) inverse of the data covariance for beamformer
+weights calculations.</p>
+<p>The function also finds pseudo-Z of the data as a ratio <cite>pz=tr(data_cov)/tr(noise_cov)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epochs</strong> (<em>Epochs</em>) – MNE Python epochs object</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – configuration dictionary corresponding to <cite>‘epochs’</cite> key
+in the global JSON configuration file</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – MNE Python verbose level</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>data_cov</strong> (<em>ndarray</em>) – <cite>nchan x nchan</cite> the data (active interval) covariance</p></li>
+<li><p><strong>noise_cov</strong> (<em>ndarray</em>) – <cite>nchan x nchan</cite> the noise (control interval) covariance</p></li>
+<li><p><strong>inv_cov</strong> (<em>ndarray</em>) – <cite>nchan x nchan</cite> (pseudo-) inverse of the data (active interval)
+covariance</p></li>
+<li><p><strong>rank</strong> (<em>int</em>) – rank of the data covariance</p></li>
+<li><p><strong>pz</strong> (<em>float</em>) – psedo-Z = SNR + 1 of the data; <cite>pz=tr(data_cov)/tr(noise_cov)</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="epochs.get_events_per_epoch">
+<span class="sig-name descname"><span class="pre">get_events_per_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#epochs.get_events_per_epoch" title="Link to this definition"></a></dt>
+<dd><p>Create a standard <cite>events</cite> array for each epoch, as if
+an epoch were a single record. The input <cite>epochs</cite> object
+should carry annotations inherited from the original continuous
+<cite>raw</cite> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>epochs</strong> (<em>Epochs</em>) – the MNE Python Epochs object</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>events_per_epoch</strong> (<em>list of ndarray</em>) – a list of events arrays for
+each epochs. Note that event sample index is counted from
+the start of the epoch (not from the trigger)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="epochs.invert_for_rank">
+<span class="sig-name descname"><span class="pre">invert_for_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#epochs.invert_for_rank" title="Link to this definition"></a></dt>
+<dd><p>Calculate pseudo-inverse of a Hermitian matrix using a precalculated
+rank value. Return a closest positive-definite matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>ndarray</em>) – a Herimitian matrix</p></li>
+<li><p><strong>rank</strong> (<em>int &gt; 0</em>) – rank to be used for inverting</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>inv_data</strong> (<em>ndarray</em>) – positively defined pseudo-inverse of data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="epochs.mask_events">
+<span class="sig-name descname"><span class="pre">mask_events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_events</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#epochs.mask_events" title="Link to this definition"></a></dt>
+<dd><p>Select events with non-zero IDs after mask is applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>all_events</strong> (<em>ndarray</em><em> of </em><em>int</em>) – (n_events,3) input events array</p></li>
+<li><p><strong>mask</strong> (<em>int</em>) – as is, unsigned integer</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>masked_events</strong> (<em>ndarray of int</em>) – (n_masked_events,3) output events array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-setup_utils">
+<span id="setup-utils-py"></span><h2>setup_utils.py<a class="headerlink" href="#module-setup_utils" title="Link to this heading"></a></h2>
+<p><strong>File structure dependent utilities and convenience functions.</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="setup_utils.DataHost">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DataHost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost" title="Link to this definition"></a></dt>
+<dd><p>This class contains the data host and file structure dependent methods and
+attributes for accessing all MEG records and other related parameters and
+data.</p>
+<p><strong>Attributes</strong></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="setup_utils.DataHost.config">
+<span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#setup_utils.DataHost.config" title="Link to this definition"></a></dt>
+<dd><p>the main app configuration dictionary passed to the class
+constructor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="setup_utils.DataHost.host">
+<span class="sig-name descname"><span class="pre">host</span></span><a class="headerlink" href="#setup_utils.DataHost.host" title="Link to this definition"></a></dt>
+<dd><p>the data host name. If current host is not listed in the
+<cite>config[‘hosts’]</cite>, <cite>host = ‘other’</cite> will be set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="setup_utils.DataHost.cluster_job">
+<span class="sig-name descname"><span class="pre">cluster_job</span></span><a class="headerlink" href="#setup_utils.DataHost.cluster_job" title="Link to this definition"></a></dt>
+<dd><p>flag that the host supports running python scripts as
+SLURM array of parallel jobs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="setup_utils.DataHost.root">
+<span class="sig-name descname"><span class="pre">root</span></span><a class="headerlink" href="#setup_utils.DataHost.root" title="Link to this definition"></a></dt>
+<dd><p>pathname to the root of the project data files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="setup_utils.DataHost.pipeline_version">
+<span class="sig-name descname"><span class="pre">pipeline_version</span></span><a class="headerlink" href="#setup_utils.DataHost.pipeline_version" title="Link to this definition"></a></dt>
+<dd><p>(str): subfolder under <cite>root</cite>, where all processing
+results for the current pipeline version are stored.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="setup_utils.DataHost.meg">
+<span class="sig-name descname"><span class="pre">meg</span></span><a class="headerlink" href="#setup_utils.DataHost.meg" title="Link to this definition"></a></dt>
+<dd><p>name of subfolder with project’s MEG files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p><strong>Methods</strong></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>dict</em>) – a dictionary constructed from the main configuration JSON file.</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_ct_file">
+<span class="sig-name descname"><span class="pre">get_ct_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_ct_file" title="Link to this definition"></a></dt>
+<dd><p>Return path to the MEG system cross talk .fif file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_fc_file">
+<span class="sig-name descname"><span class="pre">get_fc_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_fc_file" title="Link to this definition"></a></dt>
+<dd><p>Return path to the MEG system fine calibration data file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_mri_subjects_dir">
+<span class="sig-name descname"><span class="pre">get_mri_subjects_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_mri_subjects_dir" title="Link to this definition"></a></dt>
+<dd><p>Return a path to the folder with all subjects MRI and
+FreeSurfer reconstructions data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_step_in_dir">
+<span class="sig-name descname"><span class="pre">get_step_in_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_step_in_dir" title="Link to this definition"></a></dt>
+<dd><p>Get input data folder for a specified step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>step</strong> (<em>str</em>) – step name</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>path</strong> (<em>Path</em>) – full path to the folder</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_step_out_dir">
+<span class="sig-name descname"><span class="pre">get_step_out_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_step_out_dir" title="Link to this definition"></a></dt>
+<dd><p>Get output data folder for a specified step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>step</strong> (<em>str</em>) – step name</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>path</strong> (<em>Path</em>) – full path to the folder</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_step_out_file">
+<span class="sig-name descname"><span class="pre">get_step_out_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_step_out_file" title="Link to this definition"></a></dt>
+<dd><p>Get base name for the step output file, given the step
+name and the input file name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>step</strong> (<em>str</em>) – step name</p></li>
+<li><p><strong>in_file</strong> (<em>Path</em><em> | </em><em>str</em>) – pathname or basename of the input file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>basename</strong> (<em>str</em>) – the base name of the output file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="setup_utils.DataHost.get_subject_bem_dir">
+<span class="sig-name descname"><span class="pre">get_subject_bem_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subject</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.DataHost.get_subject_bem_dir" title="Link to this definition"></a></dt>
+<dd><p>Return a path to MEG subject’s BEM data folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mri_subject</strong> (<em>str</em>) – subject ID on MRI side</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>bem_path</strong> (<em>Path</em>) – Path object pointing to the subject’s BEM
+folder.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.events_fif">
+<span class="sig-name descname"><span class="pre">events_fif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fif</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.events_fif" title="Link to this definition"></a></dt>
+<dd><p>Based on a raw .fif file full pathname, generate a full path to corresponding
+events file, which is supposed to reside in the ‘prefilter’ step output folder.
+The input raw .fif file may be produced by any step of the processing pipeline;
+only its subject, date and task information will be used to determine the
+events file path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>fif</strong> (<em>Path</em><em> | </em><em>str</em>) – full pathname to a raw .fif file</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Reurns:</dt><dd><p>events_fif(Path): full pathname of the events file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.extract_epochs">
+<span class="sig-name descname"><span class="pre">extract_epochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.extract_epochs" title="Link to this definition"></a></dt>
+<dd><p>Test if the <cite>task_name</cite> requires extracting epochs from the raw data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.fif_date">
+<span class="sig-name descname"><span class="pre">fif_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fif</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.fif_date" title="Link to this definition"></a></dt>
+<dd><p>Lambda-function for extracting session date from the path like &lt;path&gt;/&lt;meg-subj&gt;/YYMMDD/file.ext</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.fif_subject">
+<span class="sig-name descname"><span class="pre">fif_subject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fif</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.fif_subject" title="Link to this definition"></a></dt>
+<dd><p>Lambda-function for extracting MEG subject ID from the path like &lt;path&gt;/&lt;meg-subj&gt;/YYMMDD/file.ext</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.files_to_process">
+<span class="sig-name descname"><span class="pre">files_to_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.files_to_process" title="Link to this definition"></a></dt>
+<dd><p>A generator function yielding next input file to process, and corresponding
+output file. All folders needed to store the output file are created also,
+unless they already exist.</p>
+<p><strong>This generator applies to the MEG part of the pipeline only</strong>, because the
+MRI part (including BEM model and source space construction) uses a different directory
+structure - see <cite>mri_subjects_to_process()</cite> for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>step</strong> (<em>str</em>) – name of the step being executed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>in_fif</strong> (<em>Path</em>) – full pathname object for the input file to process</p></li>
+<li><p><strong>out_fif</strong> (<em>Path</em>) – full pathname object for the output file to process</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_bem_data">
+<span class="sig-name descname"><span class="pre">get_bem_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meg_subj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_bem_data" title="Link to this definition"></a></dt>
+<dd><p>Return a dictionary with paths to subject’s BEM-related data
+required for forward solutions computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>meg_subj</strong> (<em>str</em>) – subject ID on the MEG side</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>paths_dict</strong> (<em>dict</em>) – a dictionary containing Path objects for
+the subject’s BEM, mri-&gt;head transformation and source
+space data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_erm_band_file">
+<span class="sig-name descname"><span class="pre">get_erm_band_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_erm_band_file" title="Link to this definition"></a></dt>
+<dd><p>Get full pathname for ERM .fif file filtered to specified frequency
+band.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>Path</em>) – full pathname of the empty room recording .fif file</p></li>
+<li><p><strong>band</strong> (<em>[</em><em>fmin</em><em>, </em><em>fmax</em><em>]</em>) – frequency band, Hz</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>erm_band_fif</strong> (<em>Path</em>) – full pathname to the ERM recording filtered to
+specified band. The band will be appended as _NN.n-MM.mHz suffix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_fif_task">
+<span class="sig-name descname"><span class="pre">get_fif_task</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fif</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_fif_task" title="Link to this definition"></a></dt>
+<dd><p>Given the pathname of the .fif file, return its corresponding
+task name. Possible tasks are: ‘rest’, ‘naturalistic’ and
+‘task_runN’ where <cite>N</cite> is <cite>1</cite>, <cite>2</cite>, or <cite>3</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fif</strong> (<em>Path</em><em> | </em><em>str</em>) – the .fif file full or partial pathname</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>task_name</strong> (<em>str</em>) – corresponding task</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_head_pos_file">
+<span class="sig-name descname"><span class="pre">get_head_pos_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_head_pos_file" title="Link to this definition"></a></dt>
+<dd><p>Get base name for the head positions file, given the input raw
+.fif file name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>Path</em><em> | </em><em>str</em>) – pathname or basename of the input file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>basename</strong> (<em>str</em>) – the base name of the output file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_maxfiltered_rank">
+<span class="sig-name descname"><span class="pre">get_maxfiltered_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_maxfiltered_rank" title="Link to this definition"></a></dt>
+<dd><p>Assuming that the record was max-filtered, get the true rank of the data
+using maxfilter info saved in the raw object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw</strong> (<em>MNE Raw</em>) – the data Raw object</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>data_rank</strong> (<em>int</em>) – either the rank after max_filter, or None if
+maxfilter info was not found</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_sdict_for_job">
+<span class="sig-name descname"><span class="pre">get_sdict_for_job</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subjects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_sdict_for_job" title="Link to this definition"></a></dt>
+<dd><p>Based on the full subjects dictionary, create subjects dictionary
+for a given array job index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>subjects</strong> (<em>dict</em>) – subjects dictionary containing key-value pairs in the form
+<cite>‘sid’: [‘YYMMDD’, ‘YYMMDD’,…]</cite>, where the list contains the date
+strings for the subject’s recording sessions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>sdict</strong> (<em>dict</em>) – subjects dictionary for current job, in the above format</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_subj_subfolder">
+<span class="sig-name descname"><span class="pre">get_subj_subfolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_subj_subfolder" title="Link to this definition"></a></dt>
+<dd><p>Given a <cite>Path</cite> object of a folder with all subjects’ files
+construct a <cite>Path</cite> to the date-specific subject’s data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folder</strong> (<em>Path</em>) – path to the subject files, for example ‘/…/meg/raw’</p></li>
+<li><p><strong>sid</strong> (<em>str</em>) – subject’s ID</p></li>
+<li><p><strong>date</strong> (<em>str</em>) – integer string ‘YYMMDD’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>path</strong> (<em>Path</em>) – Path object for subject ‘sid’ files for specified date</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_subjects_and_folders">
+<span class="sig-name descname"><span class="pre">get_subjects_and_folders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_subjects_and_folders" title="Link to this definition"></a></dt>
+<dd><p>Get input and output folders for a specified step, and construct the
+<cite>subjects</cite> dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>step</strong> (<em>str</em>) – the processing step name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>in_dir</strong> (<em>Path</em>) – full pathname to this step input folder</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>) – full pathname to this step output folder</p></li>
+<li><p><strong>subjects</strong> (<em>dict</em>) – subjects dictionary containing key-value pairs in the form
+<cite>‘sid’: [‘YYMMDD’, ‘YYMMDD’,…]</cite>, where the list contains the date
+strings for the subject’s recording sessions.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_subjects_for_job">
+<span class="sig-name descname"><span class="pre">get_subjects_for_job</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_subjects</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ijob</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">njobs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_subjects_for_job" title="Link to this definition"></a></dt>
+<dd><p>Given a full list of subjects,the array job index and the total
+number of jobs in the array, return a subject list for this
+job to process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>all_subjects</strong> (<em>list</em><em> of </em><em>str</em>) – full list of subject IDs for the SLURM
+array job</p></li>
+<li><p><strong>ijob</strong> (<em>int</em>) – 0-based index of the current job; 0 &lt;= ijob &lt; njobs</p></li>
+<li><p><strong>njobs</strong> (<em>int</em>) – the total number of jobs in the SLURM array job</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>slist</strong> (<em>list of str</em>) – list of subject IDs for this job to process</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.get_trans_file_pathname">
+<span class="sig-name descname"><span class="pre">get_trans_file_pathname</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fif</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.get_trans_file_pathname" title="Link to this definition"></a></dt>
+<dd><p>Given a full pathname of the fif file, construct
+a full pathname for the -trans.fif file residing in the same
+folder as the  <cite>fif</cite> file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fif</strong> (<em>Path</em>) – the full pathname of the .fif file. It is expected to
+be like &lt;path&gt;/&lt;meg-subj&gt;/YYMMDD/file.ext</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>trans_fif</strong> (<em>Path</em>) – full pathname of the transformation file, which is
+&lt;path&gt;/&lt;meg-subj&gt;/YYMMDD/&lt;meg-subj&gt;-trans.fif</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.is_erm_band_file">
+<span class="sig-name descname"><span class="pre">is_erm_band_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.is_erm_band_file" title="Link to this definition"></a></dt>
+<dd><p>Returns True if specified file is a (possibly processed
+version) of an empty room recording which was band-pass filtered
+to construct projectors. Such files are expected to have names
+ending like …_35.0-53.0Hz.fif (that is, with band specified
+in Hz)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>Path</em><em> | </em><em>str</em>) – the file (path)name</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>result</strong> (<em>bool</em>) – test result</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.is_erm_file">
+<span class="sig-name descname"><span class="pre">is_erm_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.is_erm_file" title="Link to this definition"></a></dt>
+<dd><p>Returns True if specified file is a (possibly processed
+version) of empty room recording.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>Path</em><em> | </em><em>str</em>) – the file (path)name</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>result</strong> (<em>bool</em>) – test result</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.is_valid_date">
+<span class="sig-name descname"><span class="pre">is_valid_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.is_valid_date" title="Link to this definition"></a></dt>
+<dd><p>Given a 6-digit integer string, returns <cite>True</cite> if this is a valid
+YYMMDD date.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.is_valid_sid">
+<span class="sig-name descname"><span class="pre">is_valid_sid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.is_valid_sid" title="Link to this definition"></a></dt>
+<dd><p>Returns True if string <cite>s</cite> is a valid subject ID. Currently
+the valid sID should contain 6 characters which are eigher
+digits or upper case letters.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.ltc_file_pathname">
+<span class="sig-name descname"><span class="pre">ltc_file_pathname</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meg_subj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_fif</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atlas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.ltc_file_pathname" title="Link to this definition"></a></dt>
+<dd><p>Construct full pathname for HDF5 file with saved ROI time courses, based on the
+task, source space and the altas used. For example, for the task ‘rest’ and source space like
+‘sub-45TDGV-ico-4-src.fif’ the output .hdf5 file name will be
+‘45TDGV-rest-ico-4-destrieux-ltc.hdf5’</p>
+<p>Note that the names of ROIs themselves depend on the atlas (parcellation) used. ROI names
+will be stored inside the generated HDF5 file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meg_subj</strong> (<em>str</em>) – subject ID on the MEG side</p></li>
+<li><p><strong>task_name</strong> (<em>str</em>) – one of ‘rest’, ‘naturalistic’ or ‘task_runN’,
+where <cite>N</cite> is <cite>1</cite>, <cite>2</cite>, or <cite>3</cite></p></li>
+<li><p><strong>ss_fif</strong> (<em>Path</em>) – full pathname of this subject’s source space</p></li>
+<li><p><strong>atlas</strong> (<em>str</em>) – atlas name for the ROI parcellation</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>) – pathname of the output folder for the ltc file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ltc_hdf5</strong> (<em>Path</em>) – full pathname of the output .hdf5 file with label
+time courses</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.make_subject_dict">
+<span class="sig-name descname"><span class="pre">make_subject_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slist</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.make_subject_dict" title="Link to this definition"></a></dt>
+<dd><p>Create a dictionary containing key-value pairs in the form</p>
+<p><cite>‘sid’: [‘YYMMDD’, ‘YYMMDD’,…]</cite>,</p>
+<p>where the list contains the date strings for the subject’s recording sessions.</p>
+<p>The folder is expected to contain subject subfolders whose names satisfy
+specific format, checked by function <cite>is_valid_sid()</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folder</strong> (<em>str</em>) – a full path to the folder containing each subject’s data as a
+subfolder like ‘sID / date1 date2 … ‘</p></li>
+<li><p><strong>slist</strong> (<em>list</em><em> | </em><em>None</em>) – a list where each element is eighter sID or a list
+in the form <cite>[sID, ‘YYMMDD’, ‘YYMMDD’]</cite>, with <cite>sID</cite> being a subject ID
+string and <cite>‘YYMMDD’</cite> - an integer string. When only <cite>sID</cite> is provided,
+all available dates will be added to corresponding <cite>sID</cite>. If <cite>slist</cite>
+is <cite>None</cite> - then all subjects and all dates in the <cite>folder</cite> will be
+collected.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>subject_dict</strong> (<em>dict</em>) – the dictionary described above.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.meg2mri_subject">
+<span class="sig-name descname"><span class="pre">meg2mri_subject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meg_subject</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.meg2mri_subject" title="Link to this definition"></a></dt>
+<dd><p>For everybody’s convenience, the same subject’s ID is encoded
+differently on MEG and MRI side. This function converts MEG
+subject ID to MRI subject ID in this particular project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>meg_subject</strong> (<em>str</em>) – MEG subject ID</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>mri_subject</strong> (<em>str</em>) – corresponding MRI subject ID</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.mri2meg_subject">
+<span class="sig-name descname"><span class="pre">mri2meg_subject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mri_subject</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.mri2meg_subject" title="Link to this definition"></a></dt>
+<dd><p>For everybody’s convenience, the same subject’s ID is encoded
+differently on MEG and MRI side. This function converts MRI
+subject ID to MEG subject ID in this particular project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mri_subject</strong> (<em>str</em>) – MRI subject ID</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>meg_subject</strong> (<em>str</em>) – corresponding MEG subject ID</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="setup_utils.mri_subjects_to_process">
+<span class="sig-name descname"><span class="pre">mri_subjects_to_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#setup_utils.mri_subjects_to_process" title="Link to this definition"></a></dt>
+<dd><p>This function returns a list of subjects to process in MRI part of the
+pipeline. Note that when running array job on the cluster, for some of
+the job indices this list may be empty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ss</strong> (<em>obj</em>) – reference to this app object</p></li>
+<li><p><strong>step</strong> (<em>str</em>) – name of the step being executed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>subj_list</strong> (<em>list of str</em>) – list of MRI subject IDs to process. Note that MRI subject
+ID differs from the same subject’s MEG subject ID</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-nearest_pos_def">
+<span id="nearest-pos-def-py"></span><h2>nearest_pos_def.py<a class="headerlink" href="#module-nearest_pos_def" title="Link to this heading"></a></h2>
+<p><strong>A function to find a positive definite matrix which is most close to
+a given matrix.</strong></p>
+<dl class="simple">
+<dt>This code by Ahmed Fasih was downloaded from</dt><dd><p><a class="reference external" href="https://gist.github.com/fasiha/fdb5cec2054e6f1c6ae35476045a0bbd">https://gist.github.com/fasiha/fdb5cec2054e6f1c6ae35476045a0bbd</a></p>
+</dd>
+</dl>
+<p>on Oct 17, 2021</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="nearest_pos_def.isPD">
+<span class="sig-name descname"><span class="pre">isPD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nearest_pos_def.isPD" title="Link to this definition"></a></dt>
+<dd><p>Returns true when input is positive-definite, via Cholesky</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nearest_pos_def.nearestPD">
+<span class="sig-name descname"><span class="pre">nearestPD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nearest_pos_def.nearestPD" title="Link to this definition"></a></dt>
+<dd><p>Find the nearest positive-definite matrix to input</p>
+<p>A Python/Numpy port of John D’Errico’s <cite>nearestSPD</cite> MATLAB code [1], which
+credits [2].</p>
+<p>[1] <a class="reference external" href="https://www.mathworks.com/matlabcentral/fileexchange/42885-nearestspd">https://www.mathworks.com/matlabcentral/fileexchange/42885-nearestspd</a></p>
+<p>[2] N.J. Higham, “Computing a nearest symmetric positive semidefinite
+matrix” (1988): <a class="reference external" href="https://doi.org/10.1016/0024-3795(88)90223-6">https://doi.org/10.1016/0024-3795(88)90223-6</a></p>
+</dd></dl>
+
+</section>
+<section id="module-args_to_json">
+<span id="args-to-json-py"></span><h2>args_to_json.py<a class="headerlink" href="#module-args_to_json" title="Link to this heading"></a></h2>
+<p>A helper utility to convert a list of function arguments with
+their default values into a corresponding JSON file snippet</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="args_to_json.append_json_to_file">
+<span class="sig-name descname"><span class="pre">append_json_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#args_to_json.append_json_to_file" title="Link to this definition"></a></dt>
+<dd><p>Appends the JSON representation of function arguments with default values to the input file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="args_to_json.parse_arguments">
+<span class="sig-name descname"><span class="pre">parse_arguments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#args_to_json.parse_arguments" title="Link to this definition"></a></dt>
+<dd><p>Parses a comma-separated list of function arguments with default values.</p>
+</dd></dl>
+
+</section>
+<section id="module-spect_raw_fif">
+<span id="spect-raw-fif-py"></span><h2>spect_raw_fif.py<a class="headerlink" href="#module-spect_raw_fif" title="Link to this heading"></a></h2>
+<p><strong>A helper utility for viewing power spectra of the raw
+FIF files.</strong></p>
+<p>Can be used standalone, or as a function call.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="spect_raw_fif.CONFIG_JSON">
+<span class="sig-name descname"><span class="pre">CONFIG_JSON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'spect_raw_config.json'</span></em><a class="headerlink" href="#spect_raw_fif.CONFIG_JSON" title="Link to this definition"></a></dt>
+<dd><p>Specifies JSON config file name with default settings.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="spect_raw_fif.spect_raw_fif">
+<span class="sig-name descname"><span class="pre">spect_raw_fif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dsname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">picks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_fft</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_projectors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_logx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_logy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spect_raw_fif.spect_raw_fif" title="Link to this definition"></a></dt>
+<dd><p>Function to plot <strong>amplitude power spectral density</strong> for sensor channels
+given the <cite>Raw</cite> data object or corresponding .fif file.</p>
+<p>All parameters except <cite>raw</cite> are supplied in the JSON file pointed to by
+the <cite>CONFIG_JSON</cite> definition. This file is supposed to reside in the same
+folder where this source file is. A subset of parameters can also be passed via
+function arguments; in this case values passed as arguments take precedence
+over those specified in the JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dsname</strong> (<em>str</em>) – pathname of the data .fif file. If not supplied,
+corresponding <cite>Raw</cite> object should be specified via <cite>raw</cite>
+argument.</p></li>
+<li><p><strong>raw</strong> (<em>mne.Raw</em>) – as is; if both <cite>dsname</cite> and <cite>raw</cite> are provided,
+<cite>raw</cite> will be used.</p></li>
+<li><p><strong>picks</strong> (<em>str</em><em> | </em><em>list</em><em> of </em><em>str</em><em> | </em><em>array</em><em>) </em><em>(</em><em>see MNE Python docs for details</em>) – channels to work with.</p></li>
+<li><p><strong>fmin</strong> (<em>float</em>) – min frequency to pick from calculated spectrum, Hz</p></li>
+<li><p><strong>fmax</strong> (<em>float</em>) – max frequency to pick from calculated spectrum, Hz</p></li>
+<li><p><strong>n_fft</strong> (<em>int</em>) – FFT length for the Welch method</p></li>
+<li><p><strong>apply_projectors</strong> (<em>bool</em>) – flag to apply existing SSP projectors to data</p></li>
+<li><p><strong>xlim</strong> (<em>[</em><em>xmin</em><em>, </em><em>xmax</em><em>]</em>) – X-axis (frequency) range for plotting; all
+available frequencies will be plotted if not specified.</p></li>
+<li><p><strong>ylim</strong> (<em>[</em><em>ymin</em><em>, </em><em>ymax</em><em>]</em>) – Y-axis (spectrum) range for plotting;
+calculated automatically if not specified,</p></li>
+<li><p><strong>b_logx</strong> (<em>bool</em>) – flag to use log scale for frequencies</p></li>
+<li><p><strong>b_logy</strong> (<em>bool</em>) – flag to use log scale for spectra</p></li>
+<li><p><strong>show</strong> (<em>bool</em>) – flag to show the plot (blocks the execution until the
+plot is closed)</p></li>
+<li><p><strong>verbose</strong> (<em>str</em>) – verbose level - ‘info’, ‘warnings’, ‘errors’, etc.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the plot figure</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fig(matplotlib figure object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-view_raw_fif">
+<span id="view-raw-fif-py"></span><h2>view_raw_fif.py<a class="headerlink" href="#module-view_raw_fif" title="Link to this heading"></a></h2>
+<p><strong>A simple viewer of the MNE Python raw data. Can be used both standalone and
+as a function call.</strong></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="view_raw_fif.CONFIG_JSON">
+<span class="sig-name descname"><span class="pre">CONFIG_JSON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'view_raw_config.json'</span></em><a class="headerlink" href="#view_raw_fif.CONFIG_JSON" title="Link to this definition"></a></dt>
+<dd><p>Specifies JSON config file name with default settings.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="view_raw_fif.view_raw_fif">
+<span class="sig-name descname"><span class="pre">view_raw_fif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dsname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">picks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highpass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowpass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#view_raw_fif.view_raw_fif" title="Link to this definition"></a></dt>
+<dd><p>Function to plot and browse channel data given the <cite>Raw</cite> data object or corresponding .fif file.</p>
+<p>All parameters except <cite>raw</cite> are supplied in the JSON file pointed to by
+the <cite>CONFIG_JSON</cite> definition. This file is supposed to reside in the same
+folder where this source file is. A subset of parameters can also be passed via
+function arguments; in this case values passed as arguments take precedence
+over those specified in the JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dsname</strong> (<em>str</em>) – pathname of the data .fif file. If not supplied,
+corresponding <cite>Raw</cite> object should be specified via <cite>raw</cite>
+argument.</p></li>
+<li><p><strong>raw</strong> (<em>mne.Raw</em>) – as is; if both <cite>dsname</cite> and <cite>raw</cite> are provided,
+<cite>raw</cite> will be used.</p></li>
+<li><p><strong>picks</strong> (<em>str</em><em> | </em><em>list</em><em> of </em><em>str</em><em> | </em><em>array</em><em>) </em><em>(</em><em>see MNE Python docs for details</em>) – channels to work with.</p></li>
+<li><p><strong>highpass</strong> (<em>float</em>) – viewing high pass filter cut off frequency, Hz.</p></li>
+<li><p><strong>lowpass</strong> (<em>float</em>) – viewing low pass filter cut off frequency, Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If highpass &gt; lowpass - then the bandstop filter is constructed</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Nothing</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="README.html" class="btn btn-neutral float-left" title="MEG processing pipeline for the “Religion” project" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, amoiseev.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

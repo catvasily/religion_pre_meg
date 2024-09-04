@@ -1,0 +1,620 @@
+# ----------------------------------------------------------------------
+# NOTE: this is a JSON file with comments. It requires using commentjson
+# module to process, instead of a standard python json library
+# ----------------------------------------------------------------------
+# Input and configuration parameters for run_pipeline.py                  
+# ----------------------------------------------------------------------
+{
+    # Step(s) to run:
+    #----------------------------
+    #"to_run": ["input", "prefilter"],
+    "to_run": ["input", "maxfilter"],
+    #"to_run": ["input", "ica"],
+    #"to_run": ["input", "bem_model"],
+    #"to_run": ["input", "src_rec"],
+    #----------------------------
+
+    # A list of subjects to process. When null or empty - all subjects in the source folder
+    # for all dates will be processed. Otherwise the list is formatted 
+    # as follows: ["sID1",...,["sIDk", <date1>, <date2>],...]
+    # When only ID is given - all dates found for the subject will be processed. Otherwise
+    # only specified dates will be processed.
+    # The date is expected to be an integer of the form: YYMMDD
+    "subjects": null,
+    #"subjects": ["45TDGV"],
+    #"subjects": ["3V2AAK", "PILOT4"],
+
+    "N_ARRAY_JOBS": 1,          # Number of parralel jobs when running on CC cluster
+                                # Set this to 1 if not running an array job.
+                                # This parameter is only used when run on DA cluster
+    "out_root": "preprocessed", # top folder name for all pipeline output files
+    "pipeline_version": "A1",   # Pipeline version name. All processing results will
+                                # be placed in folder with this name
+    "verbose": "info",          # MNE Python verbose level to use
+    #"verbose": "warning",       # "warning" won't produce any message from MNE functions
+                                # unless there are warnings or errors 
+    "seed": 12345,              # Pipeline-wide seed to initialize random generators
+    "file_name_warning": "This filename",   # Start of MNE's warning message regarding
+                                # file naming conventions (to filter those out) 
+
+    # ------------------------------------------------------------------------
+    # Host setup: input and output root folders depending on the host computer
+    # ------------------------------------------------------------------------
+    "hosts": {
+        "cedar": {
+            "cluster_job": true,
+            "root": "/project/6019337/databases/religion",  # project root folder
+            "meg": "meg",               # meg data subfolder
+
+            # Folder where all subject's freesurfer output results are stored
+            "mri": "/project/6019337/databases/religion/bids/preprocessed_23.1.3/sourcedata/freesurfer",
+
+            "ct_file": "raw/ct_sparse.fif", # MEG system cross talk .fif file (usually in meg/raw folder)
+            "fc_file": "raw/sss_cal.dat"    # MEG system fine calibration file
+        },
+
+        "ub2": {
+            "cluster_job": false,       # this is not an array job on the CC cluster
+            "root": "/data/religion",   # project root folder
+            "meg": "meg",               # meg data subfolder
+
+            # Folder where all subject's freesurfer output results are stored
+            "mri": "/data/religion/freesurfer",
+
+            "ct_file": "raw/ct_sparse.fif", # MEG system cross talk .fif file (usually in meg/raw folder)
+            "fc_file": "raw/sss_cal.dat"    # MEG system fine calibration file
+        },
+
+        "other": {
+            "cluster_job": false,       # this is not an array job on the CC cluster
+            "root": "/data/religion",   # project root folder
+            "meg": "meg",               # meg data subfolder
+
+            # Folder where all subject's freesurfer output results are stored
+            "mri": "/data/religion/freesurfer",
+
+            "ct_file": "raw/ct_sparse.fif", # MEG system cross talk .fif file (usually in meg/raw folder)
+            "fc_file": "raw/sss_cal.dat"    # MEG system fine calibration file
+        }
+    },   # end of "hosts"
+
+    # -------------------------
+    # 'prefilter' step settings
+    # -------------------------
+    "prefilter": {
+        "in_dir": "raw",            # Step input folder relative to root/meg
+        "out_dir": "prefiltered",   # Step output folder relative to root/meg/processed/<pipeline_version>
+        "files": null,              # A list of files to process; all .fif files if null
+        #"files": ["45TDGV_naturalistic_raw.fif"],
+        #"files": ["45TDGV_rest_raw.fif", "45TDGV_erm_raw.fif"],
+        "suffix": "_filt",          # Output files suffix. In: name.fif; out: name<suffix>.fif
+        "target_sample_rate": 500,  # Sampling frequency in Hz for the output data
+        "recalc_head_pos": false,   # Flag to recalculate head positions, even if found
+
+        # Head localization settings
+        "chpi": {            
+            "amps": {   # See docs for chpi.compute_chpi_amplitudes()
+                "t_step_min": 0.01,
+                "t_window": "auto",
+                "ext_order": 1,
+                "tmin": 0.0,
+                "tmax": null
+            },
+            "locs": {   # See docs for chpi.compute_chpi_locs()
+                "t_step_max": 1.0,
+                "too_close": "raise",
+                "adjust_dig": false                
+            },
+            "pos": {   # See docs for chpi.compute_chpi_pos()
+                "dist_limit": 0.005,
+                "gof_limit": 0.98,
+                "adjust_dig": false
+            }
+        },
+
+        # MNE raw.notch_filter() arguments
+        "notch": {
+            "freqs": [60.0],            # A list of frequencies to notch
+            "picks": "meg",
+            "filter_length": "auto",    # Only used for FIR filter
+            "notch_widths": 2.0,        # NOTE: error if a list is passed ihere (MNE 1.7.1)
+            "trans_bandwidth": 1.0,
+            "n_jobs": -1,               # Use all available CPUs
+            "method": "iir",
+            "iir_params": null,         # 'null' results in 4th order Butterworth
+            "mt_bandwidth": null,       # not used for FIR or IIR
+            "p_value": 0.05,            # not used for FIR or IIR
+            "phase": "zero",
+            "fir_window": "hamming",    # not used for IIR
+            "fir_design": "firwin",     # not used for IIR
+            "pad": "reflect_limited",   # not used for IIR
+            "skip_by_annotation": ["edge","bad_acq_skip"]
+        },
+
+        # MNE raw.filter() arguments
+        "filter": {
+            "l_freq": 2.0,              # HP cut off, or null (for LP filter)
+            "h_freq": 80.0,             # LP cut off, or null (for HP filter)
+            "picks": null,              # Setting null instead of "meg" results in band pass
+                                        # parameters saved to Raw.info
+            "filter_length": "auto",    # Only used for FIR filter
+            "l_trans_bandwidth": 2.0,   # Only used for FIR filter
+            "h_trans_bandwidth": 2.0,   # Only used for FIR filter
+            "n_jobs": -1,               # Use all available CPUs
+            "method": "iir",
+            "iir_params": null,         # 'null' results in 4th order Butterworth
+            "phase": "zero",
+            "fir_window": "hamming",    # not used for IIR
+            "fir_design": "firwin",     # not used for IIR
+            "skip_by_annotation": ["edge","bad_acq_skip"],
+            "pad": "reflect_limited"    # not used for IIR
+        },
+
+        "find_events": {
+            "stim_channel": "STI101",
+            "output": "onset",
+            "consecutive": true,    # Default is: "increasing"
+            "min_duration": 0,
+            "shortest_event": 2,
+            "mask": null,
+            "uint_cast": false,
+            "mask_type": "and",
+            "initial_event": false
+        }, 
+
+        "resample": {
+            "npad": "auto",
+            "window": "auto",
+            "stim_picks": null,
+            "n_jobs": -1,
+            "pad": "auto",
+            "method": "polyphase"      # Change it to "fft" for a non-integer resampling factor
+        },
+
+        # MNE raw.save() arguments
+        "save": {
+            "picks": null,
+            "tmin": 0,
+            "tmax": null,
+            "buffer_size_sec": null,
+            "drop_small_buffer": false,
+            "proj": false,
+            "fmt": "single",
+            "overwrite": true,          # NOTE: overwriting is ENABLED!
+            "split_size": "2GB",
+            "split_naming": "neuromag"
+        }
+    },
+
+    # -------------------------
+    # 'maxfilter' step settings
+    # -------------------------
+    "maxfilter": {
+        "in_dir": "prefiltered",    # Step input folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "maxfiltered",   # Step output folder relative to root/meg/processed/<pipeline_version>
+        "files": null,              # A list of files to process; all .fif files if null
+        #"files": ["45TDGV_rest_raw_filt.fif", "45TDGV_erm_raw_filt.fif"],
+
+        # Head motion correction: set this flag to 'true' to perform
+        # correction; set it to 'false' to only change head coordinates
+        # system to the averaged one (no changes to the MEG data itself)
+        "do_head_motion_correction": true, 
+
+        "suffix": "_tsss",          # Output files suffix. In: name.fif; out: name<suffix>.fif
+        "show_plots": false,        # Flag to show interactive plots
+
+        # Settings for find_bad_channels_maxwell()
+        "remove_bad": {
+            "limit": 7.0,
+            "duration": 5.0,
+            #"duration": 150.0,  # QQQ
+            "min_count": 5,
+            "return_scores": false,
+            "origin": "auto",
+            "int_order": 8,
+            "ext_order": 3,
+            "coord_frame": "meg",   # Should be "meg" for ERM, "head" subject data
+            "regularize": "in",
+            "ignore_ref": false,
+            "bad_condition": "error",
+            "head_pos": null,
+            "mag_scale": 100.0,
+            "skip_by_annotation": ["edge","bad_acq_skip"],
+            "h_freq": null,     # Default is 40, null means no low pass filter
+            "extended_proj": []
+        },
+
+        # Filter settings for ERM vib artifact detection
+        "vib_filter": {
+            # List of freq bands for projectors
+            #"bands": [[20,23], [27,31], [35,53], [57,60]],
+            "bands": [[20,23], [27,31], [35,53]],
+
+            "threshold": 0.05,          # Captured variance threshold for projectors, 0.<= t <=1.
+
+            # raw.filter() call arguments other than l_freq, h_freq
+            "kwargs": {
+                "picks": null,              # Setting null instead of "meg" results in band pass
+                                            # parameters saved to Raw.info
+                "filter_length": "auto",    # Only used for FIR filter
+                "l_trans_bandwidth": 2.0,   # Only used for FIR filter
+                "h_trans_bandwidth": 2.0,   # Only used for FIR filter
+                "n_jobs": -1,               # Use all available CPUs
+                "method": "iir",
+                "iir_params": null,         # 'null' results in 4th order Butterworth
+                "phase": "zero",
+                "fir_window": "hamming",    # not used for IIR
+                "fir_design": "firwin",     # not used for IIR
+                "skip_by_annotation": ["edge","bad_acq_skip"],
+                "pad": "reflect_limited"    # not used for IIR
+            }
+        },
+
+        # compute_proj_raw() settings
+        "proj": {
+            "start": 0,
+            "stop": null,
+            "duration": 1,
+            "n_grad": 2,
+            "n_mag": 2,
+            "n_eeg": 0,
+            "reject": null,
+            "flat": null,
+            "n_jobs": -1,
+            "meg": "combined"   # 'separate' (default) or 'combined';
+                                # looks like must be 'combined' for eSSS
+        },
+
+        # Additional keyword args to the maxwell_filter() call
+        "maxf": {
+            "origin": "auto",
+            "int_order": 8,
+            "ext_order": 3,
+            "st_duration": 10,
+            "st_correlation": 0.98,
+            "coord_frame": "head",
+            "regularize": "in",
+            "ignore_ref": false,
+            "bad_condition": "error",
+            "st_fixed": true,
+            "st_only": false,
+            "mag_scale": 100.0,
+            "skip_by_annotation": ["edge","bad_acq_skip"]
+        },
+
+        # raw.save() args for maxfiltered data
+        "save": {
+            "picks": null,
+            "tmin": 0,
+            "tmax": null,
+            "buffer_size_sec": null,
+            "drop_small_buffer": false,
+            "proj": false,
+            "fmt": "single",
+            "overwrite": true,          # NOTE: overwriting is ENABLED!
+            "split_size": "2GB",
+            "split_naming": "neuromag"
+        }
+    },
+
+    # -------------------------
+    # 'ica' step settings
+    # -------------------------
+    "ica": {
+        "in_dir": "maxfiltered",    # Step input folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "icafiltered",   # Step output folder relative to root/meg/processed/<pipeline_version>
+        #"files": null,              # A list of files to process; all .fif files if null
+        "files": ["45TDGV_naturalistic_raw_filt_tsss.fif"],
+
+        "suffix": "_ica",           # Output files suffix. In: name.fif; out: name<suffix>.fif
+        "show_plots": false,        # Flag to show interactive plots
+        #"show_plots": true,
+
+        # ICA constructor args, except n_components
+        "init": {
+            "n_components": 0.999999, 
+            "noise_cov": null,
+            "random_state": null,
+            "method": "fastica",
+            "fit_params": null,
+            "max_iter": "auto",
+            "allow_ref_meg": false
+        },
+
+        # ICA.fit() args
+        "fit": {
+            "picks": null,
+            "start": null,
+            "stop": null,
+            "decim": null,
+            "reject": null,
+            "flat": null,
+            "tstep": 2.0,
+            "reject_by_annotation": true
+        },
+
+        # ICA.plot_sources() args
+        "plot_sources": {
+            "picks": null,
+            "start": null,
+            "stop": null,
+            "title": null,
+            "show": true,
+            "block": true,  # Otherwise the figure is lost unless saved 
+            "show_first_samp": false,
+            "show_scrollbars": true,
+            "time_format": "float",
+            "precompute": null,
+            "use_opengl": null,
+            "theme": null,
+            "overview_mode": null,
+            "splash": false
+        },
+
+        # ICA.find_bads_eog() args
+        "find_bads_eog": {
+            "ch_name": null,
+            "threshold": 3.0,
+            "start": null,
+            "stop": null,
+            "l_freq": 1,
+            "h_freq": 10,
+            "reject_by_annotation": true,
+            "measure": "zscore"
+        },
+
+        # ICA.find_bads_ecg() args
+        "find_bads_ecg": {
+            "ch_name": null,
+            "threshold": "auto",
+            "start": null,
+            "stop": null,
+            "l_freq": 8,
+            "h_freq": 16,
+            "method": "ctps",
+            "reject_by_annotation": true,
+            "measure": "zscore"
+        },
+
+        # ICA.apply() args
+        "apply": {
+            "include": null,
+            "exclude": null,
+            "n_pca_components": null,
+            "start": null,
+            "stop": null,
+            "on_baseline": "warn"
+        },
+
+        # raw.save() args for ICA-corrected data
+        "save": {
+            "picks": null,
+            "tmin": 0,
+            "tmax": null,
+            "buffer_size_sec": null,
+            "drop_small_buffer": false,
+            "proj": false,
+            "fmt": "single",
+            "overwrite": true,          # NOTE: overwriting is ENABLED!
+            "split_size": "2GB",
+            "split_naming": "neuromag"
+        }
+    },
+
+    # -------------------------
+    # 'bem_model' step settings
+    # -------------------------
+    "bem_model": {
+        #"show_plots": false,        # Flag to show interactive plots
+        "show_plots": true,          # Flag to show interactive plots
+        "recalc_bem": false,        # Flag to recalculate BEM surfaces, even if exist
+        "conductivity": [0.3],      # List of conductivities for the conductor model.
+                                    # Typically [0.3, 0.006, 0.3] for EEG, [0.3] for MEG
+        #"conductivity": [0.3, 0.006, 0.3], 
+        "ico_bem": 4,               # ico downsampling setting for BEM surfaces: 5=20484, 4=5120, 3=1280
+        "ico_src": 4,               # ico downsampling setting for the surface source space: 5=20484, 4=5120, 3=1280
+                                    # Typically ico_src = ico_bem; ico_src > ico_bem should never be used
+        "vol_src_space": false,     # True to use volume source space, otherwise - use surface source space
+        "grid_step": 0.005,         # Grid step in m for volume source spaces
+
+        "watershed": {              # Args for make_watershed_bem()
+            "overwrite": true,
+            "volume": "T1",
+            "atlas": false,
+            "gcaatlas": false,
+            "preflood": null,
+            "show": false,
+            "copy": true,
+            "T1": null,
+            "brainmask": "ws.mgz"
+        },
+
+        "scalp": {                  # Args for make_scalp_surfaces()
+            "force": true,
+            "overwrite": true,
+            "no_decimate": false,
+            "threshold": 20,
+            "mri": "T1.mgz"
+        },
+
+        "volume_ss": {              # Additional args for setup_volume_source_space()
+            "mri": "T1.mgz",
+            "sphere": null,
+            "surface": null,
+            "mindist": 5.0,
+            "exclude": 10.0,
+            "volume_label": null,
+            "add_interpolator": true,
+            "sphere_units": "m",
+            "single_volume": false,
+            "n_jobs": -1
+        },
+
+        "surface_ss": {             # Additional args for setup_source_space()
+            "surface": "white",
+            "add_dist": true,
+            "n_jobs": -1
+        }
+    },
+
+    # -------------------------
+    # 'src_rec' step settings
+    # -------------------------
+    "src_rec": {
+        "in_dir": "icafiltered",                # Step input folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "beamformed",                # Step output folder relative to root/meg/processed/<pipeline_version>
+        #"files": null,                          # A list of files to process; all .fif files if null
+        #"files": ["45TDGV_task_run2_raw_filt_tsss_ica.fif"],
+        "files": ["45TDGV_naturalistic_raw_filt_tsss_ica.fif"],
+        "sensor_channels_for_src_rec": "meg",   # channel picks: a string like "meg", "grad", "mag" 
+        "atlas": "destrieux",                   # MRI atlas for ROIs definition; see "parcellations" below
+                                                # for supported values
+        "roi_time_course_method": "pca_flip",   # Way to construct a single time course with all ROI
+                                                # source time courses; see description of `mne.extract_label_time_course()`
+
+        "recalc_forward": false,    # Flag to force fwd sol recalculation even if exists
+
+        "suffix": "-src",           # Output files suffix. In: name.fif; out: name<suffix>.fif
+        #"show_plots": false,       # Flag to show interactive plots
+        "show_plots": true,         # Flag to show interactive plots
+
+        # Coregistration related settings
+        "coreg": {
+            "init": {               # Coregistration class constructor args 
+                "fiducials": "auto",
+                "on_defects": "raise"
+            },
+
+            "fit_fiducials": {
+                    "lpa_weight": 1.0,
+                    "nasion_weight": 10.0,
+                    "rpa_weight": 1.0
+            },
+
+            "icp1": {               # fit_icp() 1st pass args
+                "n_iterations": 6,
+                "nasion_weight": 2.0
+            },
+
+            "icp2": {               # fit_icp() 2nd pass args
+                "n_iterations": 20,
+                "nasion_weight": 10.0
+            },
+
+            "fit_icp": {            # fit_icp() common args
+                    "lpa_weight": 1.0,
+                    "rpa_weight": 1.0,
+                    "hsp_weight": 1.0,
+                    "eeg_weight": 1.0,
+                    "hpi_weight": 1.0,
+                    "callback": null
+            },
+
+           "omit_dist": 0.005,      # off-distance for the digitized head point to be dropped
+
+           "plot_alignment": {
+                "surfaces": "head-dense",
+                "coord_frame": "meg",
+                "meg": [],
+                "eeg": [],
+                "fwd": null,
+                "dig": true,
+                "ecog": true,
+                "src": null,
+                "mri_fiducials": false,
+                "bem": null,
+                "seeg": true,
+                "fnirs": true,
+                "show_axes": true,
+                "dbs": true,
+                "fig": null,
+                "interaction": "terrain",
+                "sensor_colors": null
+            }
+        },
+
+        "make_fwd": {
+            "meg": true,
+            "eeg": false,
+            "mindist": 0.0,         # Note that mindist is already taken into account in source space
+            "ignore_ref": false,
+            "n_jobs": -1
+        },
+
+        "epochs": {
+            "t_range": [-0.5, 4.0],     # Epoch time bounds relative to the trigger, s
+            "t_control": [-0.5, 0.0],   # Control interval, s
+            "t_active": [0.0, 4.0],     # Active interval, s
+            "btn_mask": "0xF00",        # Events ID mask to select all button-related events
+            "non_btn_mask": "0xFF",     # Events ID mask to filter out all button-related events
+
+            "find_events": {
+                "stim_channel": "STI101",
+                "output": "onset",
+                "consecutive": true,    # Default is: "increasing"
+                "min_duration": 0,
+                "shortest_event": 2,
+                "mask": null,
+                "uint_cast": false,
+                "mask_type": "and",
+                "initial_event": false
+            }, 
+
+            # Epochs object constructor
+            "create_epochs": {
+                "event_id": [41, 51, 61],   # Event codes for question start
+                "baseline": null,       # No baseline correction
+                "picks": null,          # All channels present in raw; only sensors expected
+                "preload": true,
+                "reject": null,
+                "flat": null,
+                "proj": true,           # Projections (if any) will be applied
+                "decim": 1,
+                "reject_tmin": null,
+                "reject_tmax": null,
+                "detrend": null,
+                "on_missing": "raise",
+                "reject_by_annotation": true,
+                "metadata": null,
+                "event_repeated": "error"
+            },
+
+            # Common args for compute_covariance()
+            "compute_cov": {
+                "keep_sample_mean": false,  # Default is True, which gives non-centered covariance
+                "projs": null,              # Inherit projector use from Epochs
+                "method": "empirical",
+                "method_params": null,
+                "cv": 3,
+                "scalings": null,           # Use default scalings for sensor types: (mag=1e15, grad=1e13, eeg=1e6)
+                "n_jobs": -1,               # Use all CPU cores
+                "return_estimators": false,
+                "on_mismatch": "raise",     # Raise exception if MEG->head transforms are not identical for all epochs
+                "rank": "info"              # Takes into account max-filters and projectors
+            }
+        },
+
+        # Beamformer reconstruction settings
+        "beam": {
+            "return_stc": false,    # Flag to return MNE Python STC object; this object is currently
+                                    # not needed
+            "units": "pz",          # either "pz" or "source" - see get_beam_weights() func
+            "tol": 0.01,
+            "rcond": 1e-10
+        },
+
+        "parcellations": {          # Mapping from atlas names to .parc file names
+            "destrieux": "aparc.a2009s",
+            "dkt": "aparc.DKTatlas"
+        },
+
+        "read_labels": {            # Args for read_labels_from_annot() function
+            "hemi": "both",         # 'lh', 'rh' or 'both'
+            "surf_name": "white",   # white = white/gray boundary, pial = gray/cereb fluid boundary
+            "annot_fname": null,
+            "regexp": null,
+            "sort": true
+        }
+    }
+}
+

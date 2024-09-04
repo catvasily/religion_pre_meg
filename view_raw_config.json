@@ -1,0 +1,90 @@
+# ----------------------------------------------------------------------
+# NOTE: this is a JSON file with comments. It requires using commentjson
+# module to process, instead of a standard python json library
+# ----------------------------------------------------------------------
+
+# Mind that floating point values cannot have '.' at the end:
+# 1. -> incorrect; 1.0 -> correct
+{   
+    # FIF file name. When view_raw_fif is ran standalone, 
+    # setting fname to null opens file dialogue
+    "fname":    "45TDGV_task_run1_raw_filt_tsss.fif",
+    #"fname":    null,
+
+    "path":     "/data/religion/meg/preprocessed/A1/maxfiltered/45TDGV/240326", # data files folder,
+    "preload":  true,   # Flag to preload data into memory
+    "backend":  "qt",   # graphics backend for plotting: "matplotlib" or "qt",
+    "verbose":  "info", # one of debug, info, warning, error
+
+    # Arguments for the mne.viz.plot_raw() function
+    "kwargs": {
+        "picks": ["meg", "eog", "ecg"], # i.e. ['meg', 'eeg'], 'data', channel name strings (e.g., ['MEG0111', 'MEG2623'])
+                            # etc. - see MNE docs
+		"title": null,      # Plot title
+        "events": null,     # A list of event IDs to show on plot, or null
+        "event_id": null,   # Event names or IDs to show instead of respective event numbers
+        "event_color": null,
+        "duration": 180.0,    # Initial time window length
+        "start": 0.0,       # Initial time offset
+        "n_channels": 20,   # Initital # of chans per window
+		"bgcolor": "w",     # background color
+
+        # Colors for the time courses for channel types
+        "color": {
+            "mag": "r",
+            "grad": "b",
+            "eeg": "k",
+            "eog": "k",
+            "ecg": "m",
+            "emg": "k",
+            "ref_meg": "steelblue",
+            "misc": "k",
+            "stim": "k",
+            "resp": "k",
+            "chpi": "k"
+        },
+
+        "bad_color": "lightgray",
+        "scalings": null,       # default "auto"; Channels amp scaling; may be null - then 
+                                # data-independent defaults will be used
+		"remove_dc": true,
+		"order": null,          # null or order in which to plot the channels
+		"show_options": true,   # show projection's related dialog
+		"show": true,           # flag to show the plot
+		"block": true,          # flag to block execution until plot is closed
+
+        # Filtering. If higpass > lowpass, bandstop (notch) will be applied
+		"highpass": 61.0,	    # Default null
+		"lowpass": 59.0,         # Default null
+		"filtorder": 4,		    # Default 4; when 0  - uses FIR filter
+		"clipping": 1.5,		# Default = 1.5
+		"show_first_samp": false,	# default false. If true, the actual number
+					            # of a sample which is designated as first is shown
+		"proj": true,           # Flag to apply projections when viewing
+		"group_by": "selection", # "type", "position". "original", "selection"
+		"butterfly": false,	    # Start in butterfly mode
+		"decim": "auto",        # decimate data for viewing; no anti-aliasing is applied
+        "noise_cov": null,      # Covariance file to use for prewhitening
+		"show_scrollbars": true,
+        "show_scalebars": true,
+		"time_format": "float",
+        "precompute": true,     # Do precomputations for Qt backend, to speed up display
+        "use_opengl": null,     # Only used for Qt backend 
+        "theme": null,          # “auto”, “light”, or “dark” or a path-like to a custom stylesheet
+		"overview_mode": "channels" # Qt backend: “channels”, “empty”, or “hidden”
+    },
+
+    # Arguments for mne.find_events() function
+    "events_args": {
+        "stim_channel": ["STI101"],
+        "output": "onset",
+        "consecutive": "increasing",
+        "min_duration": 0,
+        "shortest_event": 2,
+        "mask": null,
+        "uint_cast": false,
+        "mask_type": "and",        # Either 'and' or 'not_and'
+        "initial_event": false
+    }
+}
+

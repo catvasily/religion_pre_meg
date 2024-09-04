@@ -1,0 +1,63 @@
+# ----------------------------------------------------------------------
+# NOTE: this is a JSON file with comments. It requires using commentjson
+# module to process, instead of a standard python json library
+# ----------------------------------------------------------------------
+
+# Mind that floating point values cannot have '.' at the end:
+# 1. -> incorrect; 1.0 -> correct
+{   
+    # FIF file name. When view_raw_fif is ran standalone, 
+    # setting fname to null opens file dialogue
+    #"fname":    null,
+    #"fname":    "PILOT4_erm_raw_filt.fif",
+    #"fname":    "PILOT4_rest_raw_filt.fif",
+    #"fname":    "45TDGV_erm_raw_filt.fif",
+    #"fname":    "45TDGV_rest_raw_filt.fif",
+    #"fname":    "PILOT4_rest_raw_filt_tsss.fif",
+    "fname":    "45TDGV_rest_raw_filt_tsss.fif",
+
+    #"path":     "/data/religion/meg/preprocessed/A1/prefiltered/PILOT4/230629", # data files folder,
+    #"path":     "/data/religion/meg/preprocessed/A1/maxfiltered/PILOT4/230629", # data files folder,
+    #"path":     "/data/religion/meg/preprocessed/A1/prefiltered/45TDGV/240326", # data files folder,
+    "path":     "/data/religion/meg/preprocessed/A1/maxfiltered/45TDGV/240326", # data files folder,
+    "picks": "meg",     # i.e. ['meg', 'eeg'], 'data', channel name strings (e.g., ['MEG0111', 'MEG2623'])
+    "fmin": 1.0,        # min frequency to pick from calculated spectrum, Hz
+    "fmax": 80.0,        # max frequency to pick from calculated spectrum, Hz;
+                        # if 0.0 - all frequencies will be used
+    "n_fft": 1024,      # FFT length for the Welch method
+    "apply_projectors": true,    # Flag to apply existing projectors to the data
+    "xlim": null,       # null, or [xmin, xmax] X-limits for plotting
+    #"ylim": null,       # null, or [ymin, ymax] Y-limits for plotting
+    "ylim": [1.0,200.0], 
+	"b_logx": true,     # flag to use log-scale for x-axis
+    "b_logy": true,     # flag to use log-scale for y-axis
+    "show": true,       # Flag to show the plot and block the execution
+    "verbose": "info",
+
+    # Additional paramters passed to Raw.compute_psd() function
+	"kwargs_psd": {
+            "method": "welch",  # spectrum estimation method
+			"tmin": null,       
+            "tmax": null, 		# Take all time points
+            "exclude": "bads",  # "bads" or list of channel names, or [] to include
+                                # all channels (including the bad channels)
+            "remove_dc": true,
+			"reject_by_annotation": true,   # Reject bad segments
+			"n_jobs": -1 		# Number of jobs; -1 will use number of cores
+    },
+    
+    # Additional paramters passed to Spectrum.plot() function
+    "kwargs_plot": {
+        "amplitude": true, 
+        "average": false,       # Flag to average spectra over all channels 
+        "ci": "sd",
+        "ci_alpha": 0.3,        # Ignored when average = False
+        "color": "black",       # Color for curves if spatial color = False
+        "alpha": null,          # See docs for behavior when average is False
+        "spatial_colors": true,
+        "sphere": null,
+        "exclude": "bads"       # "bads" or list of channel names, or [] to include
+                                # all channels (including the bad channels)
+    }
+}
+

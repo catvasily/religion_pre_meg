@@ -1,6 +1,15 @@
 #venv
 mne
 
+# Vim swap files
+*.swp
+
+# Sphinx working files
+doc/Makefile
+doc/make.bat
+doc/_build/doctrees/
+doc/_build/html/_sources/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
