@@ -8,10 +8,10 @@
     # Step(s) to run:
     #----------------------------
     #"to_run": ["input", "prefilter"],
-    "to_run": ["input", "maxfilter"],
+    #"to_run": ["input", "maxfilter"],
     #"to_run": ["input", "ica"],
     #"to_run": ["input", "bem_model"],
-    #"to_run": ["input", "src_rec"],
+    "to_run": ["input", "src_rec"],
     #----------------------------
 
     # A list of subjects to process. When null or empty - all subjects in the source folder
@@ -20,8 +20,8 @@
     # When only ID is given - all dates found for the subject will be processed. Otherwise
     # only specified dates will be processed.
     # The date is expected to be an integer of the form: YYMMDD
-    "subjects": null,
-    #"subjects": ["45TDGV"],
+    #"subjects": null,
+    "subjects": ["PILOT4"],
     #"subjects": ["3V2AAK", "PILOT4"],
 
     "N_ARRAY_JOBS": 1,          # Number of parralel jobs when running on CC cluster
@@ -465,7 +465,8 @@
         "out_dir": "beamformed",                # Step output folder relative to root/meg/processed/<pipeline_version>
         #"files": null,                          # A list of files to process; all .fif files if null
         #"files": ["45TDGV_task_run2_raw_filt_tsss_ica.fif"],
-        "files": ["45TDGV_naturalistic_raw_filt_tsss_ica.fif"],
+        "files": ["PILOT4_rest_raw_filt_tsss_ica.fif"],
+        #"files": ["45TDGV_naturalistic_raw_filt_tsss_ica.fif"],
         "sensor_channels_for_src_rec": "meg",   # channel picks: a string like "meg", "grad", "mag" 
         "atlas": "destrieux",                   # MRI atlas for ROIs definition; see "parcellations" below
                                                 # for supported values
@@ -600,7 +601,8 @@
                                     # not needed
             "units": "pz",          # either "pz" or "source" - see get_beam_weights() func
             "tol": 0.01,
-            "rcond": 1e-10
+            "rcond": 1e-4           # min bound for data cov singular values condition value to determine
+                                    # rank of covariance
         },
 
         "parcellations": {          # Mapping from atlas names to .parc file names
