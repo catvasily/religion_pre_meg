@@ -11,6 +11,11 @@ def is_valid_sid(s):
     the valid sID should contain 6 characters which are eigher 
     digits or upper case letters.
     """
+    # Account for Nancy's wrong sIDs:
+    if s in ('ext6ADJ3D','extFQABY7','extMCJQKQ','extRTPD9A','extTVFMU4', \
+            'extU2M7EY','FW9GP','RZWJ7'):
+        return True
+
     if len(s) != 6:
         return False
 
@@ -353,14 +358,6 @@ def files_to_process(ss, step):
     if ss.data_host.cluster_job:
         # Currently subjects refers to all subjects for the SLURM array job
         # Get a list of subjects for current job
-        """QQQ - remove after testing
-        slist = list(subjects.keys())
-        slist = get_subjects_for_job(slist, ss.ijob, ss.args['N_ARRAY_JOBS'])
-
-        # Create the subject dictionary for the current job
-        sdict = {s:subjects[s] for s in slist}
-        subjects = sdict
-        """
         subjects = get_sdict_for_job(ss, subjects)
 
     config = ss.args[step]
@@ -517,11 +514,13 @@ def get_trans_file_pathname(fif):
     """
     return fif.parent / (fif_subject(fif) + '-' + fif_date(fif) + '-trans.fif') 
 
-def ltc_file_pathname(meg_subj, task_name, ss_fif, atlas, out_dir):
+def ltc_file_pathname(meg_subj, task_name, ss_fif, atlas, out_dir, eID = None):
     """Construct full pathname for HDF5 file with saved ROI time courses, based on the
     task, source space and the altas used. For example, for the task 'rest' and source space like
     'sub-45TDGV-ico-4-src.fif' the output .hdf5 file name will be
-    '45TDGV-rest-ico-4-destrieux-ltc.hdf5'
+    '45TDGV-rest-ico-4-destrieux-ltc.hdf5'. In case of evoked results, corresponding name
+    will also include '-evoked-NN', where NN is the event ID for the condition used to
+    obtaine evoked data, for example '45TDGV-task_run1-ico-4-destrieux-ltc-evoked-111.hdf5'
 
     Note that the names of ROIs themselves depend on the atlas (parcellation) used. ROI names
     will be stored inside the generated HDF5 file.
@@ -533,6 +532,8 @@ def ltc_file_pathname(meg_subj, task_name, ss_fif, atlas, out_dir):
         ss_fif(Path): full pathname of this subject's source space
         atlas(str): atlas name for the ROI parcellation
         out_dir(Path): pathname of the output folder for the ltc file
+        eID(int or None): event ID used to generate evoked data, or None for 
+            non-evoked results
 
     Returns:
         ltc_hdf5 (Path): full pathname of the output .hdf5 file with label
@@ -541,7 +542,12 @@ def ltc_file_pathname(meg_subj, task_name, ss_fif, atlas, out_dir):
     ss_name = ss_fif.name
     mri_subj = meg2mri_subject(meg_subj)
     f = ss_name.replace(mri_subj, meg_subj + f'-{task_name}')
-    f = f.replace('-src.fif', f'-{atlas}-ltc.hdf5')
+
+    if eID is None:
+        f = f.replace('-src.fif', f'-{atlas}-ltc.hdf5')
+    else:
+        f = f.replace('-src.fif', f'-{atlas}-ltc-evoked-{eID}.hdf5')
+
     return out_dir / f
 
 class DataHost:
@@ -610,7 +616,7 @@ class DataHost:
         """
         if step == 'prefilter':
             in_dir = self.root / self.meg / self.config[step]['in_dir']
-        elif step in ('maxfilter', 'ica', 'src_rec'):
+        elif step in ('maxfilter', 'ica', 'src_rec', 'plot_epochs','plot_waveforms'):
             in_dir = self.root / self.meg / self.config["out_root"] / \
                     self.pipeline_version / self.config[step]['in_dir']
         else:
@@ -628,7 +634,8 @@ class DataHost:
         Returns:
             path(Path): full path to the folder
         """
-        if step in ('prefilter', 'maxfilter', 'ica', 'src_rec'):
+        if step in ('prefilter', 'maxfilter', 'ica', 'src_rec', 'plot_epochs',
+                'plot_waveforms'):
             out_dir = self.root / self.meg / self.config["out_root"] / \
                     self.pipeline_version / self.config[step]['out_dir']
         else:
@@ -657,6 +664,13 @@ class DataHost:
 
         if step in ('prefilter', 'maxfilter', 'ica', 'src_rec'):
             out_name = stem + self.config[step]['suffix'] + ext
+        elif step == 'plot_epochs':
+            out_name = stem + '_'+self.config[step]['plot_type'] + \
+                    '.' + self.config[step]['save_as_type']
+        elif step == 'plot_waveforms':
+            task = self.config[step]['task']
+            out_name = stem + '_'+self.config[step][task]['plot_type'] + \
+                    '.' + self.config[step]['save_as_type']
         else:
             raise ValueError(f'Invalid step specified: {step}')
 

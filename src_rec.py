@@ -18,12 +18,13 @@ from mne.io import read_info
 import setup_utils as su
 from bem_model import src_space_fif, bem_sol_pathname
 from nearest_pos_def import nearestPD
-from epochs import construct_epochs
+from epochs import construct_epochs, get_epochs_for_event, epochs_evoked_cov
 
 __file__ = path.realpath(__file__)    # expand potentially relative path to a full one
 sys.path.append(path.dirname(path.dirname(__file__))+ "/beam-python")
 
 from construct_mcmv_weights import is_pos_def, construct_single_source_weights
+from dual_mcmv_weights import dual_beam_single_source_weights 
 
 _LEFT_HEMI_ZERO = -1_111_111
 """ This value is interpreted as the vertex #0 of the left hemisphere surface
@@ -46,10 +47,25 @@ def src_rec(ss):
     if ss.data_host.cluster_job:
         config['show_plots'] = False
 
+    # When files to process are explicitly specified,
+    # disregard the 'task_only' flag
+    if config['files'] is not None:
+        config['task_only'] = False
+
     files = su.files_to_process(ss, STEP)
     for in_fif, out_fif in files:
         # Skip non-raw .fif files, just in case
         if mne.what(in_fif) != 'raw':
+            continue
+
+        task_name = su.get_fif_task(in_fif)
+        
+        # Skip continuous data if the 'task_only' flag is specified
+        if config['task_only'] and (not su.extract_epochs(task_name)):
+            continue
+
+        # Skip continuous data if the 'do_evoked' flag is specified
+        if config['do_evoked'] and (not su.extract_epochs(task_name)):
             continue
 
         trans_fif = su.get_trans_file_pathname(out_fif)
@@ -96,39 +112,72 @@ def src_rec(ss):
         picks = config['sensor_channels_for_src_rec']
         raw = raw.pick(picks, exclude = 'bads')
 
-        task_name = su.get_fif_task(in_fif)
-
         if su.extract_epochs(task_name):
+            is_epochs = True
             epochs, events_per_epoch, data_cov, noise_cov, inv_cov, rank, pz = \
                 construct_epochs(ss, raw, all_events)
 
-            sensor_data, W, U = beamformer_stc_epochs(epochs, fwd, inv_cov, noise_cov,
-                                            pz = pz, units=config['beam']['units'], verbose = ss.args['verbose'])
+            # epochs_beam_result is either (sensor_data, W, U) or a list of those
+            # per condition (for the evoked beamformer)
+            epochs_beam_result = beamformer_stc_epochs(config, epochs, events_per_epoch, fwd,
+                                    data_cov, inv_cov, noise_cov, rank,
+                                    pz = pz, verbose = ss.args['verbose'])
         else:
             # Get the events array with sample numbers relative to the data start,
             # not relative to the time when Electa system's hardware started 
+            is_epochs = False
             events_for_stc = all_events.copy()
             events_for_stc[:,0] -= raw.first_samp
-            _, sensor_data, data_cov, W, U, pz = beamformer_stc_continuous(raw, fwd, **config['beam'],
+            _, sensor_data, data_cov, W, U, pz = beamformer_stc_continuous(config, raw, fwd, 
                                                    verbose = ss.args['verbose'])
 
         # Compute ROI time courses
         # ------------------------
         labels, label_coms_vtc, label_coms_rr = get_labels(meg_subject, config, ss.data_host,
                                            fwd, verbose = ss.args['verbose'])
-        label_tcs, label_wts, is_epochs = beam_extract_label_time_course(sensor_data, data_cov, labels, fwd, W,
-                                    mode = config["roi_time_course_method"],
-                                    verbose = ss.args['verbose'])
-
-        ltc_hdf5 = su.ltc_file_pathname(meg_subject, task_name, lst_fwd_fifs[1], config['atlas'], out_fif.parent)
         label_names = [l.name for l in labels]
 
-        write_roi_time_courses(ltc_hdf5, label_tcs, label_names,
-            vertno = label_coms_vtc, rr = label_coms_rr, W = label_wts, pz = pz,
-                               events = events_per_epoch if is_epochs else events_for_stc)
+        def get_and_save_ltcs(eID):
+            """
+            A helper function that wraps label time courses extraction and saving
+            operations.
+            """
+            label_tcs, label_wts, _ = beam_extract_label_time_course(sensor_data, data_cov, labels, fwd, W,
+                                        mode = config["roi_time_course_method"],
+                                        verbose = ss.args['verbose'])
 
-        if ss.args['verbose'].upper() == 'INFO':
-            print(f'ROI time courses saved to {ltc_hdf5}')
+            if eID is not None:     # This is the evoked data
+                label_tcs = average_epoched_tcs(label_tcs)
+
+            ltc_hdf5 = su.ltc_file_pathname(meg_subject, task_name, lst_fwd_fifs[1],
+                                config['atlas'], out_fif.parent, eID = eID)
+
+            write_roi_time_courses(ltc_hdf5, label_tcs, label_names,
+                vertno = label_coms_vtc, rr = label_coms_rr, W = label_wts, pz = pz,
+                                   events = events_for_evoked_cond if is_epochs else events_for_stc)
+
+            if ss.args['verbose'].upper() == 'INFO':
+                print(f'ROI time courses saved to {ltc_hdf5}')
+
+        if config['do_evoked']:
+            for i, eID in enumerate(config['events_for_evoked']):
+                sensor_data, W, U = epochs_beam_result[i]
+
+                # if eID has no associated epochs
+                if sensor_data is None:
+                    continue
+
+                # Assign events from the 1st epoch to both the evoked itself
+                # and to the STD
+                events_for_evoked_cond = 2*[events_per_epoch[0]]
+                get_and_save_ltcs(eID)
+        else:
+            if is_epochs:
+                events_for_evoked_cond = events_per_epoch
+                sensor_data, W, U = epochs_beam_result
+
+            get_and_save_ltcs(eID = None)
+
 
         print(f'Processing of {in_fif} completed\n')
 
@@ -147,6 +196,34 @@ def src_rec(ss):
         else:
             assert np.equal(events_for_stc, events1).all()
         """
+
+    warnings.filterwarnings("default", category=RuntimeWarning)
+    print(f'\n** {STEP} step completed **\n')                
+
+def average_epoched_tcs(epoched_tcs):
+    """
+    Given epoched time courses, calculate an average (evoked)
+    time course and an STD time course, and return those as
+    two epochs.
+
+    Args:
+        epoched_tcs(ndarray): shape `(nepochs,nchans,ntimes)`; the epoched
+            time courses data
+
+    Returns:
+        evoked_tcs(ndarray): shape `(2,nchans,ntimes)`; the evoked data with
+            1st epoch being the evoked time course, and the 2nd one - the
+            STD time course
+
+    """
+    means = np.mean(epoched_tcs, axis = 0, keepdims = True) # (1 x nchans x ntimes)
+
+    if np.__version__[0] == '2':
+        stds = np.std(epoched_tcs, axis = 0, mean = means)      # nchans x ntimes
+    else:       # Version 1.x.x
+        stds = np.std(epoched_tcs, axis = 0)      # nchans x ntimes
+
+    return np.array([means[0], stds])
 
 def coregister_mri(config, info, subject, subjects_dir, trans_fif, show_plots = True, verbose = None):
     """
@@ -273,8 +350,7 @@ def get_forward_solutions(config, in_fif, trans_fif, fwd_fif, ss_fif, bem_sol_fi
 
     return fwd
 
-def beamformer_stc_continuous(raw, fwd, *, return_stc = True, units = 'pz',
-                           tol = 1e-2, rcond = 1e-10, verbose = None):
+def beamformer_stc_continuous(config, raw, fwd, *, verbose = None):
     """
     Reconstruct source time courses for continuous data using the single source
     minimum variance beamformer.
@@ -284,23 +360,16 @@ def beamformer_stc_continuous(raw, fwd, *, return_stc = True, units = 'pz',
     in `picks` will be dropped.
 
     Args:
+        config(dict): this step configuration dictionary
         raw (mne.Raw): the raw data; it is expected to contain only
             those sensor channels that will be used to perform beamforming
         fwd (mne.Forward): forward solutions; note that those may include all meg channels,
             not only those specified by `picks` parameter
-        return_stc (bool): flag to compute all source time courses and to return
-            corresponding SourceEstimate object
-        units (str): either "source" or "pz", to obtain timecourses in A*m or amplitude
-            pseudo-Z, respectively. Note that in the 1st case source amplitudes will grow
-            large for deep sources.
-        tol (float > 0): tolerance (relative accuracy) in finding the noise_cov trace.
-        rcond (float > 0): condition for determining rank of the covariance matrix:
-            singular values less than `max(sing val) * rcond` will be considered zero.
         verbose (str or None): verbose mode (see MNE docs for details)
 
     Returns:
         stc (mne.SourceEstimate or None): source estimate (reconstructed source time courses),
-            provided return_stc flag is True; None otherwise
+            provided return_stc flag is True in config file; None otherwise
         sensor_data (ndarray): `nchan x ntimes`; M/EEG channels time courses
         data_cov (ndarray): `nchan x nchan`, sensor covariance matrix adjusted to a nearest
             positive definite matrix
@@ -309,6 +378,20 @@ def beamformer_stc_continuous(raw, fwd, *, return_stc = True, units = 'pz',
         pz (float): data's pseudo-Z found as `pz = trace(R)/tr(N)`, where `N` is the noise covariance
 
     """
+    # return_stc (bool): flag to compute all source time courses and to return
+    #    corresponding SourceEstimate object
+    # units (str): either "source" or "pz", to obtain timecourses in A*m or amplitude
+    #    pseudo-Z, respectively. Note that in the 1st case source amplitudes will grow
+    #    large for deep sources.
+    # tol (float > 0): tolerance (relative accuracy) in finding the noise_cov trace.
+    # rcond (float > 0): condition for determining rank of the covariance matrix:
+    #    singular values less than `max(sing val) * rcond` will be considered zero.
+    cfg = config['beam']
+    return_stc = cfg['return_stc']
+    units = cfg['units']
+    tol = cfg['tol']
+    rcond = cfg['rcond']
+
     # Compute sample covariance
     sensor_data = raw.get_data(    # sensor_data is nchannels x ntimes
         start=0,                # starting time sample number (int)
@@ -336,7 +419,10 @@ def beamformer_stc_continuous(raw, fwd, *, return_stc = True, units = 'pz',
         print('Data covariance: nchan = {}, rank = {}'.format(nchan, rank))
 
     # W is nchan x nsrc, U is 3 x nsrc
-    W, U = get_beam_weights(fwd['sol']['data'], inv_cov, noise_cov, units = units) 
+    # Always using a classic single state power beamformer because this is
+    # continuous data
+    W, U = get_beam_weights(fwd['sol']['data'], data_cov, inv_cov, noise_cov, 
+                    C1 = None, C2 = None, units = units, rcond = rcond, dual_state_beam = False) 
     W, U, vertices = set_source_orientation_signs(fwd, W, U)
 
     # We normalize time sources on sqrt(PZ), which is equivalent to have tr(N) = tr(R).
@@ -395,7 +481,7 @@ def construct_noise_and_inv_cov(fwd, data_cov, *, tol = 1e-2, rcond = 1e-10, max
         fwd (Forward): mne Python forward solutions class
         data_cov (ndarray): nchan x nchan data covariance matrix
         tol (float > 0): tolerance in finding the noise_cov trace.
-        rcond (float > 0): singular values less than max(sing val) * rcond will
+        rcond (float > 0): singular values less or equal to max(sing val) * rcond will
             be dropped
         max_rank(int>0 | None): if specified, sets the upper bound for rank of
             the covariance. The upper bound may be known if data is max-filtered.
@@ -514,40 +600,57 @@ def set_source_orientation_signs(fwd, W, U):
 
     return W, U, vertices
 
-def get_beam_weights(H, inv_cov, noise_cov, units):
+def get_beam_weights(H, data_cov, inv_cov, noise_cov, C1 = None, C2 = None, units = 'pz', 
+                     rcond = 1e-15, dual_state_beam = False):
     """Get beamformer weights matrix for a set of forward solutions
 
     For each source, calculate a scalar beamformer weight using a formula
 
     `w = const * R^(-1) h; h = [Hx, Hy, Hz]*u`
 
-    where `R` is the data covariance matrix, `h` is a "scalar" lead field corresponding
+    where `R` is the data covariance matrix, `h` is a 'scalar' lead field corresponding
     to the source orientation `u`. The normalization constant is selected depending
     on the `units` parameter setting:
 
-    `units = "source": const = (h' R^(-1) h)^(-1)`
+    `units = 'source': const = (h' R^(-1) h)^(-1)`
 
-    `units = "pz":     const = [h' R^(-1) N R^(-1) h]^(-1/2)`
+    `units = 'pz':     const = [h' R^(-1) N R^(-1) h]^(-1/2)`
 
     In the first case absolute current dipole amplitudes (A*m) will be reconstructed.
     In the 2nd case source amplitudes will be normalized on projected noise, effectively
     representing source-level signal to noise ratio.
- 
+
+    NOTE:
+        For a dual state beamformer case, three sets of weights exist based on
+        covariances `R1, R2`, and `(R1+R2)/2` respectively. In this implementation
+        the choice is hard-coded to be `W2` - that is `R2`-based weights are returned.
 
     Args:
         H (ndarray): nchan x (3*n_src) array of FS for a set of n_src sources 
-        inv_cov(ndarray): nchan x nchan (pseudo-)inverse of sensor cov matrix
-        noise_cov(ndarray): nchan x nchan noise cov matrix
-        units (str): either "source" or "pz"
+        data_cov(ndarray): nchan x nchan; sensor cov matrix, or R2 covariance for
+            the dual state beamformer case
+        inv_cov(ndarray): nchan x nchan; (pseudo-)inverse of data cov matrix. If `None`,
+            then `data_cov` should be provided
+        noise_cov(ndarray): nchan x nchan; noise cov matrix in case of a single state
+            beamformer; or this is R1 covariance for a dual state beamformer
+        C1(ndarray): nchan x nchan; evoked cov matrix in state 1 (or control state). For
+            the classic (non-dual state) beamformer case this value is ignored.
+        C2(ndarray): nchan x nchan; evoked cov matrix in state 2 (or active state). If
+            not `None`, an evoked beamformer will be calculated for both classic and dual
+            state beamformers. In the latter case C1 should also be not `None`.
+        units (str): either 'source' or 'pz' (default)
+        rcond (float > 0): condition for determining rank of the covariance matrix.
+            singular values less than `max(sing val) * rcond` will be considered zero.
+        dual_state_beam(bool): flag to use dual state beamformer; default False
 
     Returns:
         W (ndarray): nchan x nsrc array of beamformer weights
         U (ndarray): 3 x nsrc array of source orientations
 
     """
-    if units == "source":
+    if units == 'source':
         normalize = False
-    elif units == "pz":
+    elif units == 'pz':
         normalize = True
     else:
         raise ValueError("The 'units' parameter value should be either 'source' or 'pz'")
@@ -560,16 +663,28 @@ def get_beam_weights(H, inv_cov, noise_cov, units):
     
     # Calculate beamformer weights; result corresponds to units = "source"
     # W is (nchan x nsrc), U is (3 x nsrc)
-    W, U = construct_single_source_weights(fs, inv_cov, noise_cov, beam = "mpz", c_avg = None)
+    if dual_state_beam:
+        res = dual_beam_single_source_weights(fs, R1 = noise_cov, R2 = data_cov, C1 = C1, C2 = C2,
+                                        return_h = False, rcond = rcond)
+        W = res.W2
+        U = res.u
+    else:
+        if C2 is None:
+            # Do power beamformer
+            W, U = construct_single_source_weights(fs, inv_cov, noise_cov, beam = "mpz", c_avg = None)
+        else:
+            # Do evoked beamformer
+            W, U = construct_single_source_weights(fs, inv_cov, noise_cov, beam = "mer", c_avg = C2)
 
     if not normalize:
-        return W
+        return W, U
 
     # Normalize to get waveforms in pseudo-Z
     scales = np.sqrt(np.einsum('ns,nm,ms->s', W, noise_cov, W))	# A vector of nsrc values = sqrt(diag(W'N W))
     return W / scales, U
 
-def beamformer_stc_epochs(epochs, fwd, inv_cov, noise_cov, pz = 1, units='pz', verbose = None):
+def beamformer_stc_epochs(config, epochs, events_per_epoch, fwd, data_cov, inv_cov, noise_cov,
+                          rank, pz = 1, verbose = None):
     """
     Reconstruct source time courses for epoched data using the single source
     minimum variance beamformer.
@@ -579,46 +694,102 @@ def beamformer_stc_epochs(epochs, fwd, inv_cov, noise_cov, pz = 1, units='pz', v
     in `epochs` will be dropped.
 
     Args:
+        config(dict): this step configuration dictionary
         epochs(Epochs): as is - MNE Epochs object; it is expected to contain only
             those sensor channels that will be used to perform beamforming
+        events_per_epoch(list of ndarray): a list of events arrays, one for
+            each epoch. Each ndarray is `nevents_in_epoch x 3` array of ints
+            as described in MNE Python docs. Note that the event sample index
+            is counted from the start of the epoch (not from the trigger)
         fwd (Forward): MNE forward solutions object; note fwd typically includes all
             meg channels in the system (including bad ones)
+        data_cov(ndarray): nchan x nchan sensor cov matrix
         inv_cov(ndarray): nchan x nchan (pseudo-)inverse of sensor cov matrix
         noise_cov(ndarray): nchan x nchan noise cov matrix
+        rank (int): the rank of the sensor covarianc (usually much less than nchan because
+            of maxfiltering and out-projectors)
         pz (float): pseudo-Z of the epochs data, calculated as `tr(R)/tr(N)`, where
             `R`, `N` are data and noise covariance matrices.
-        units (str): either "source" or "pz"
         verbose (str or None): verbose mode (see MNE docs for details)
 
     Returns:
-        sensor_data (ndarray): `n_epochs x nchan x ntimes`; MEG channels time courses
-        W (ndarray): `nchan x nsrc` array of beamformer weights. For any epoch number
-            `i`, corresponding source time courses can be found as
-            `src_epoch = W.T @ sensor_data[i,:,:]`
-        U (ndarray): `3 x nsrc` array of source orientations
+        res(tuple or list of tuples): a single tuple for non-evoked beamformer, or
+            a list of tuples - one per condition - for evoked beamformer. Each tuple
+            consists of items `sensor_data, W, U`, where
+            `sensor_data (ndarray), n_epochs x nchan x ntimes` contains MEG sensor time
+            courses for condition;
+            `W (ndarray): nchan x nsrc` is an array of beamformer weights, so that the source
+            time courses for epoch `i`can be found as `src_epoch = W.T @ sensor_data[i,:,:]`;
+            `U (ndarray): `3 x nsrc` is an array of source orientations
 
     """
-    sensor_data = epochs.get_data(  # returned shape is (n_epochs, n_channels, n_times)
-                        picks=None, # take all channels
-                        item=None,  # take all epochs
-                        units=None, # use original SI units
-                        tmin=None,  # Get the whole time range
-                        tmax=None,
-                        copy=False, # Return a view of the data
-                        verbose=verbose)
-
+    units=config['beam']['units']
+    rcond=config['beam']['rcond']
     fwd = fwd.pick_channels(epochs.ch_names, ordered = False)
 
-    # W is nchan x nsrc, U is 3 x nsrc
-    W, U = get_beam_weights(fwd['sol']['data'], inv_cov, noise_cov, units = units) 
-    W, U, _ = set_source_orientation_signs(fwd, W, U)
+    if not config['do_evoked']:
+        # Doing a single power beamformer for all epochs for
+        # all conditions simultaneously
+        sensor_data = epochs.get_data(  # returned shape is (n_epochs, n_channels, n_times)
+                            picks=None, # take all channels
+                            item=None,  # take all epochs
+                            units=None, # use original SI units
+                            tmin=None,  # Get the whole time range
+                            tmax=None,
+                            copy=False, # Return a view of the data
+                            verbose=verbose)
 
-    # By normalizing W on sqrt(pz) we scale time courses of all subjects to the same
-    # pseudo-Z magnitude equivalent to pz = 1 (i.e. tr(R) = tr(N)). See comments in
-    # beamformer_stc_continuous()
-    W /= np.sqrt(pz)
+        # W is nchan x nsrc, U is 3 x nsrc
+        W, U = get_beam_weights(fwd['sol']['data'], data_cov, inv_cov, noise_cov, C1 = None,
+                    C2 = None, units = units, rcond = rcond, dual_state_beam = config['use_dual_state_beam']) 
+        W, U, _ = set_source_orientation_signs(fwd, W, U)
 
-    return sensor_data, W, U
+        # By normalizing W on sqrt(pz) we scale time courses of all subjects to the same
+        # pseudo-Z magnitude equivalent to pz = 1 (i.e. tr(R) = tr(N)). See comments in
+        # beamformer_stc_continuous()
+        W /= np.sqrt(pz)
+
+        return sensor_data, W, U
+
+    # -------------------------------------------------------------------------
+    # Doing an evoked beamformer separately for each of the requested conditions
+    # -------------------------------------------------------------------------
+    t0 = config['epochs']['t_range'][0]     # Epoch time origin rel to trigger
+    SR = epochs.info['sfreq']               # sampling rate
+    lstBeamResults = []
+
+    for eID in config['events_for_evoked']:
+        epochs4eID = get_epochs_for_event(epochs, events_per_epoch, eID)
+
+        if len(epochs4eID) == 0:
+            print(f'WARNING: no epochs found for event ID = {eID}')
+            lstBeamResults.append((None,None,None))
+            continue
+
+        sensor_data = epochs4eID.get_data(  # returned shape is (n_epochs, n_channels, n_times)
+                            picks=None, # take all channels
+                            item=None,  # take all epochs
+                            units=None, # use original SI units
+                            tmin=None,  # Get the whole time range
+                            tmax=None,
+                            copy=False, # Return a view of the data
+                            verbose=verbose)
+
+        # Calculate C1 (for control) and C2 (for active) interval
+        lstC = []
+        for time_int in (config['epochs']['t_control'], config['epochs']['t_active']):
+            smin = int(np.round((time_int[0] - t0)*SR))
+            smax = int(np.round((time_int[1] - t0)*SR))
+            lstC.append(epochs_evoked_cov(sensor_data, smin, smax))
+
+        # Calculate evoked beamformer for this event. We have lstC = [C1,C2]
+        W, U = get_beam_weights(fwd['sol']['data'], data_cov, inv_cov, noise_cov, C1 = lstC[0],
+                    C2 = lstC[1], units = units, rcond = rcond, dual_state_beam = config['use_dual_state_beam']) 
+        W, U, _ = set_source_orientation_signs(fwd, W, U)
+        W /= np.sqrt(pz)
+        lstBeamResults.append((sensor_data, W, U))
+
+    return lstBeamResults
 
 def get_labels(meg_subject, config, data_host, fwd, verbose = None):
     """

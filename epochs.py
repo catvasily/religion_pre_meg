@@ -5,7 +5,7 @@ import numpy as np
 import mne
 from nearest_pos_def import nearestPD
 
-def construct_epochs(ss, raw, all_events):
+def construct_epochs(ss, raw, all_events, skip_cov_calc = False):
     """
     Construct epochs based on specified events subset.
 
@@ -15,6 +15,8 @@ def construct_epochs(ss, raw, all_events):
             sensor channels
         all_events(ndarray): (n_events,3) MNE events array from the original
             (full) raw object
+        skip_cov_calc(bool): flag to skip covariance and rank calculations;
+            defautl `False`
 
     Returns:
         epochs(Epochs): the Epochs object
@@ -27,6 +29,10 @@ def construct_epochs(ss, raw, all_events):
             covariance
         rank (int): rank of the data covariance
         pz (float): psedo-Z = SNR + 1 of the data; `pz=tr(data_cov)/tr(noise_cov)`
+
+    NOTE:
+        When `skip_cov_calc = True`, returned variables `data_Cov, noise_Cov, inv_cov, rank, pz`
+        are all set to `None`
 
     """
     verbose = ss.args['verbose']
@@ -46,6 +52,7 @@ def construct_epochs(ss, raw, all_events):
     button_events = mask_events(all_events, int(conf['btn_mask'], 16))
     non_button_events = mask_events(all_events, int(conf['non_btn_mask'], 16))
 
+    conf['create_epochs']['baseline'] = conf['t_control']
     epochs = mne.Epochs(raw, tmin = conf['t_range'][0], tmax = conf['t_range'][1],
                         events = non_button_events, # Remove button events to avoid a rare case
                         **conf['create_epochs'],    # when a button event 'spoils' a question event
@@ -62,8 +69,12 @@ def construct_epochs(ss, raw, all_events):
 
     events_per_epoch = get_events_per_epoch(epochs)
 
-    data_Cov, noise_Cov, inv_cov, rank, pz = epochs_noise_and_inv_cov(epochs, conf,
-                                                    verbose = verbose)
+    if skip_cov_calc:
+        data_Cov, noise_Cov, inv_cov, rank, pz = None,None,None,None,None
+    else:
+        rcond = ss.args['src_rec']['beam']['rcond']
+        data_Cov, noise_Cov, inv_cov, rank, pz = epochs_noise_and_inv_cov(epochs, conf,
+                                                    rcond = rcond, verbose = verbose)
 
     return epochs, events_per_epoch, data_Cov, noise_Cov, inv_cov, rank, pz
 
@@ -95,9 +106,10 @@ def get_events_per_epoch(epochs):
         epochs(Epochs): the MNE Python Epochs object
 
     Returns:
-        events_per_epoch(list of ndarray): a list of events arrays for
-            each epochs. Note that event sample index is counted from
-            the start of the epoch (not from the trigger)
+        events_per_epoch(list of ndarray): a list of events arrays, one for
+            each epoch. Each ndarray is `nevents_in_epoch x 3` array of ints
+            as described in MNE Python docs. Note that the event sample index
+            is counted from the start of the epoch (not from the trigger)
 
     """
     # Get a list of lists of tuples like (time, duration, strID):
@@ -119,8 +131,31 @@ def get_events_per_epoch(epochs):
         events_per_epoch.append(events)
 
     return events_per_epoch
- 
-def epochs_noise_and_inv_cov(epochs, conf, verbose = None):
+
+def get_epochs_for_event(epochs, events_per_epoch, eID):
+    """
+    Return a subset of epochs which contain specified event.
+
+    Args:
+        epochs(Epochs): the MNE Python Epochs object
+        events_per_epoch(list of ndarray): a list of events arrays, one for
+            each epoch. Each ndarray is `nevents_in_epoch x 3` array of ints
+            as described in MNE Python docs. Note that the event sample index
+            is counted from the start of the epoch (not from the trigger)
+        eID (int): event ID (event code). Event codes are listed in the 3d
+            column of the events array for the epoch: `ids = events[:,2] 
+
+    Returns:
+        epochs4id(Epochs): the MNE Python Epochs object for specified event ID
+
+    """
+    if len(epochs) != len(events_per_epoch):
+        raise ValueError('Lengths of "epochs" and "events_per_epoch" must match')
+
+    idx = [(eID in earray[:,2]) for earray in events_per_epoch]
+    return epochs[idx]
+
+def epochs_noise_and_inv_cov(epochs, conf, rcond = 1e-15, verbose = None):
     """
     For epoched data, calculate: full (or data) covariance, which is the sensor covariance
     on active interval; noise covariance, which is the sensor covariance on
@@ -133,6 +168,8 @@ def epochs_noise_and_inv_cov(epochs, conf, verbose = None):
         epochs(Epochs): MNE Python epochs object
         conf(dict): configuration dictionary corresponding to `'epochs'` key
             in the global JSON configuration file
+        rcond (float > 0): singular values less or equal to max(sing val) * rcond will
+            be dropped
         verbose(str): MNE Python verbose level
 
     Returns:
@@ -161,7 +198,7 @@ def epochs_noise_and_inv_cov(epochs, conf, verbose = None):
 
     rank = sum(rank_dict.values())
 
-    inv_cov = invert_for_rank(data_Cov.data, rank)
+    inv_cov = invert_for_rank(data_Cov.data, rank, rcond = rcond)
     pz = np.trace(data_Cov.data) / np.trace(noise_Cov.data)
 
     # In case of degenerate covariance matrices after max-filtering, MNE sets all eigenvalues above known
@@ -172,14 +209,60 @@ def epochs_noise_and_inv_cov(epochs, conf, verbose = None):
 
     return data_cov, noise_cov, inv_cov, rank, pz
 
-def invert_for_rank(data, rank):
+def epochs_evoked_cov(sensor_data, smin, smax):
+    """
+    Calculate a matrix of 2nd moments of mean (evoked) time courses
+    for specified time interval:
+
+    `C = AVG[<e(s)><e(s)^T>;smin,smax]`
+
+    Here `e(s)` is a column vector of sensor values for the sample number `s`,
+    `<..>` denotes averaging over epochs, and AVG[x(s); smin, smax] performs
+    averaging over samples interval `[smin, smax)`.
+
+    Args:
+        sensor_data(ndarray): shape `(n_epochs, n_channels, n_times)` epochs time
+            courses data
+        smin (int): first sample of the time-averaging interval (inclusive)
+        smin (int): last sample of the time-averaging interval (exclusive)
+
+    Returns:
+        C (ndarray): shape `(n_channels, n_channels)` - the `C` matrix described
+            above
+
+    """
+    nepochs,nchans,nsamples = sensor_data.shape
+
+    invalid_s = lambda s,nsamples: True if (s<0) or s>=nsamples else False
+
+    if invalid_s(smin,nsamples) or invalid_s(smax,nsamples):
+        raise ValueError('smin, smax should belong to the interval [0,nsamples)')
+
+    if smin == smax:
+        raise ValueError('smin, smax cannot be equal to each other')
+
+    if smin > smax:
+        s = smax
+        smax = smin
+        smin = s
+
+    # First, average over epochs
+    data = np.mean(sensor_data[:,:,smin:smax], axis = 0)   # nchans x ntime
+
+    # This is the 2nd moments matrix averaged over ntime samples
+    return (data @ data.T) / (smax - smin)
+
+def invert_for_rank(data, max_rank, rcond = 1e-15):
     """
     Calculate pseudo-inverse of a Hermitian matrix using a precalculated
-    rank value. Return a closest positive-definite matrix.
+    maximum rank value or tolerance condition (`rcond`). Return a closest
+    positive-definite matrix.
 
     Args:
         data(ndarray): a Herimitian matrix
-        rank(int > 0): rank to be used for inverting
+        max_rank(int > 0): maximum rank to be used for inverting
+        rcond (float > 0): singular values less or equal to max(sing val) * rcond will
+            be dropped
 
     Returns:
         inv_data(ndarray): positively defined pseudo-inverse of data
@@ -187,8 +270,15 @@ def invert_for_rank(data, rank):
     """
     U, S, _ = np.linalg.svd(data, full_matrices=False, hermitian=True)
 
-    # Note that all S[i] are positive and sorted in a decreasing order
-    U = U[:, :rank]
+    # Drop close to 0 singular values and corresponding columns of U. Note that all S[i]
+    # are positive and sorted in decreasing order
+    t = rcond * S[0]
+    U = U[:, S > t]
+    rank = U.shape[1]	# The actual rank of the data covariance
+
+    if rank > max_rank:
+        rank = max_rank
+        U = U[:, :rank]
 
     # (Pseudo-) inverse of the covariance
     # Make it pos def instead of fully degenerate
