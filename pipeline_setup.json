@@ -11,7 +11,9 @@
     #"to_run": ["input", "maxfilter"],
     #"to_run": ["input", "ica"],
     #"to_run": ["input", "bem_model"],
-    "to_run": ["input", "src_rec"],
+    #"to_run": ["input", "src_rec"],
+    #"to_run": ["input", "plot_epochs"],
+    "to_run": ["input", "plot_waveforms"],
     #----------------------------
 
     # A list of subjects to process. When null or empty - all subjects in the source folder
@@ -21,8 +23,8 @@
     # only specified dates will be processed.
     # The date is expected to be an integer of the form: YYMMDD
     #"subjects": null,
-    "subjects": ["PILOT4"],
-    #"subjects": ["3V2AAK", "PILOT4"],
+    #"subjects": ["45TDGV"],
+    "subjects": ["JYBZXP"],
 
     "N_ARRAY_JOBS": 1,          # Number of parralel jobs when running on CC cluster
                                 # Set this to 1 if not running an array job.
@@ -462,11 +464,20 @@
     # -------------------------
     "src_rec": {
         "in_dir": "icafiltered",                # Step input folder relative to root/meg/processed/<pipeline_version>
-        "out_dir": "beamformed",                # Step output folder relative to root/meg/processed/<pipeline_version>
+
+        #"out_dir": "beamformed",                # Step output folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "beamformed-classic",        # QQQQ
+
         #"files": null,                          # A list of files to process; all .fif files if null
-        #"files": ["45TDGV_task_run2_raw_filt_tsss_ica.fif"],
-        "files": ["PILOT4_rest_raw_filt_tsss_ica.fif"],
-        #"files": ["45TDGV_naturalistic_raw_filt_tsss_ica.fif"],
+        "files": ["JYBZXP_task_run1_raw_filt_tsss_ica.fif"],
+        "task_only": false,                      # Flag to process only task data when 'files' = null
+        "do_evoked": true,                     # flag to reconstruct evoked response; if set will skip non-task
+                                                # files even if explicitly specified in the files list
+        "events_for_evoked": [111, 121, 131, 141],  # Event codes for evoked (phase-locked) responses
+                                                # reconstruction
+        #"use_dual_state_beam": true,            # flag to use dual state beamformer instead of a classic one
+        "use_dual_state_beam": false,            # QQQQ
+
         "sensor_channels_for_src_rec": "meg",   # channel picks: a string like "meg", "grad", "mag" 
         "atlas": "destrieux",                   # MRI atlas for ROIs definition; see "parcellations" below
                                                 # for supported values
@@ -564,7 +575,7 @@
             # Epochs object constructor
             "create_epochs": {
                 "event_id": [41, 51, 61],   # Event codes for question start
-                "baseline": null,       # No baseline correction
+                "baseline": null,       # This value will be automatically set at runtime to ctrl interval
                 "picks": null,          # All channels present in raw; only sensors expected
                 "preload": true,
                 "reject": null,
@@ -600,9 +611,13 @@
             "return_stc": false,    # Flag to return MNE Python STC object; this object is currently
                                     # not needed
             "units": "pz",          # either "pz" or "source" - see get_beam_weights() func
-            "tol": 0.01,
+            "tol": 0.01,            # tolerance (relative accuracy) in finding the noise_cov trace
+
+            #-------------------------------------------------------------------------------------------
             "rcond": 1e-4           # min bound for data cov singular values condition value to determine
-                                    # rank of covariance
+                                    # rank of covariance. SHOULD BE SET CAREFULLY TO ENSURE THAT EVs past
+                                    # the drop of the spectrum are not included!
+            #-------------------------------------------------------------------------------------------
         },
 
         "parcellations": {          # Mapping from atlas names to .parc file names
@@ -616,6 +631,129 @@
             "annot_fname": null,
             "regexp": null,
             "sort": true
+        }
+    },
+
+    # ----------------------
+    # 'plot_epochs' settings
+    # ----------------------
+    "plot_epochs": {
+        "in_dir": "icafiltered",                # Step input folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "plots/epochs",              # Step output folder relative to root/meg/processed/<pipeline_version>
+        "files": ["45TDGV_task_run1_raw_filt_tsss_ica.fif"],
+        #"show_plots": false,       # Flag to show interactive plots
+        "show_plots": true,         # Flag to show interactive plots
+        "picks": "meg",             # Channels to plot
+        "plot_type": "topo_img",     # Type of plot to create: topo_img - stacked plot of epochs
+        "save_as_type": "png",       # saved plot image type
+        "tmin": -0.5,               # plot time window min
+        "tmax": 4.0,                # plot time window max
+        "time_res": 0.5,            # desired time resolution, s
+        "fmin": 2.0,                # Min frequency, Hz
+        "fmax": 50.0,               # max frequency, Hz
+        "f_step": 1.0,              # frequency grid step, Hz
+        "fig_size_inch": [10,6],  #figure width, height in inches
+        "dpi": 300,                 # saved picture resolution
+
+        "compute_tfr": {
+            "method": "morlet",
+            "proj": false,
+            "output": "power",
+            "average": true,
+            "return_itc": false,
+            "decim": 1,
+            "n_jobs": -1
+        },
+
+        "tfr_plot_topo": {
+            "baseline": [-0.5,0],
+            "mode": "ratio",
+            "fmin": null,
+            "fmax": null,
+            "vmin": 0.1,
+            "vmax": 1.5,
+            "cmap": "jet",
+            "dB": false,
+            "colorbar": true,
+            "layout_scale": 0.945,
+            "border": "none",       # matplotlib border style string
+            "fig_facecolor": "w",
+            "fig_background": null,
+            "font_color": "k",
+            "yscale": "auto"
+        }
+    },
+
+    # ----------------------
+    # 'plot_waveforms' settings
+    # ----------------------
+    "plot_waveforms": {
+        "task": "compare_beams",   # Compare results of different beamformer types
+        #"task": "evoked_std",       # Show evoked response and its STD
+        #"task": "compare_events",   # Evoked responses for different conditions
+        "in_dir": "beamformed",    # Step input folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "plots/waveforms",  # Step output folder relative to root/meg/processed/<pipeline_version>
+        "files": ["JYBZXP-task_run1-ico-4-destrieux-ltc-evoked-121.hdf5"],
+            
+        # list if channels (ROIs) to plot; if null - all will be plotted
+        "channels": ["G_and_S_occipital_inf-lh", "G_cuneus-lh", "G_oc-temp_lat-fusifor-lh",
+            "G_oc-temp_med-Lingual-lh", "G_oc-temp_med-Parahip-lh", "G_occipital_middle-lh",
+            "G_occipital_sup-lh", "Pole_occipital-lh", "S_calcarine-lh", "S_collat_transv_ant-lh",
+            "S_collat_transv_post-lh", "S_oc-temp_lat-lh", "S_oc-temp_med_and_Lingual-lh",
+            "S_oc_middle_and_Lunatus-lh", "S_oc_sup_and_transversal-lh", "S_occipital_ant-lh",
+            "S_parieto_occipital-lh"],
+
+        "adjust_signs": true,   # Try to take into account possible sign flips of the waveforms
+        "show_plots": true,
+        "save_plots": true,
+        "save_as_type": "png",       # saved plot image type
+
+        "compare_beams": {
+            "compare_dir": "beamformed-classic",
+            "plot_type": "dual_vs_classic",
+            "plot_args": {
+                "x_limits": null,
+                "y_limits": null,
+                "colors": null,
+                "cond_names": ["dual", "classic"],
+                "xlabel": "Time",
+                "ylabel": "pseudo-Z",
+                "suptitle": "Dual state vs classic beamformer",
+                "ncols": 3,
+                "cmap": "tab10",
+                "dpi": 300
+            }
+        },
+
+        "evoked_std": {
+            "plot_type": "evoked_and_std",
+            "plot_args": {
+                "x_limits": null,
+                "y_limits": null,
+                "colors": null,
+                "cond_names": ["evoked", "std"], 
+                "xlabel": "Time",
+                "ylabel": "pseudo-Z",
+                "suptitle": "Evoked response and its STD",
+                "ncols": 3,
+                "cmap": "tab10",
+                "dpi": 300
+            }
+        },
+
+        "compare_events": {
+            "plot_type": "compare_events",
+            "plot_args": {
+                "x_limits": null,
+                "y_limits": null,
+                "colors": null,
+                "xlabel": "Time",
+                "ylabel": "pseudo-Z",
+                "suptitle": "Evoked waveforms for conditions",
+                "ncols": 3,
+                "cmap": "tab10",
+                "dpi": 300
+            }
         }
     }
 }

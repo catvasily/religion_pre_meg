@@ -67,6 +67,10 @@ Available steps:
 
     `'src_rec'`: MEG source reconstruction (inverse solution).
 
+    `'plot_epochs'`: create overview plots of epoched data.
+
+    `'plot_waveforms'`: grid plots of channel waveforms
+
 """
 
 import sys
@@ -86,6 +90,8 @@ from maxfilter import maxfilter
 from do_ica import do_ica
 from bem_model import bem_model
 from src_rec import src_rec
+from plot_epochs import plot_epochs
+from plot_waveforms import plot_waveforms
 import setup_utils as su
 
 __file__ = path.realpath(__file__)    # expand potentially relative path to a full one
@@ -138,6 +144,8 @@ class _app:
         'ica': do_ica,
         'bem_model': bem_model,
         'src_rec': src_rec,
+        'plot_epochs': plot_epochs,
+        'plot_waveforms': plot_waveforms,
     }
 
     def __call__(self, name, *args, **kwargs):
