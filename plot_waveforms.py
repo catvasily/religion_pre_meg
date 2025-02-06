@@ -27,7 +27,7 @@ def plot_waveforms(ss):
         config['show_plots'] = False
 
     # Supported plotting tasks
-    all_tasks = ('compare_beams', 'evoked_std', 'compare_events')
+    all_tasks = ('compare_beams', 'evoked_std', 'erf_std', 'compare_events')
 
     task = config['task']
 
@@ -43,7 +43,10 @@ def plot_waveforms(ss):
 
     files = su.files_to_process(ss, STEP)
     chlist = config['channels']
-    SR = ss.args['prefilter']['target_sample_rate']
+
+    SR = ss.args['prefilter']['target_sample_rate'] if task != 'erf_std' \
+            else ss.args['src_erf']['target_sample_rate']
+
     t0 = ss.args['src_rec']['epochs']['t_range'][0]
     lst_events = ss.args['src_rec']['events_for_evoked']
 
@@ -65,10 +68,12 @@ def plot_waveforms(ss):
             data_arrays = adjust_signs(data_arrays) if config['adjust_signs'] else data_arrays
             plot_array(data_arrays, x_values=x_values, fname=save_file, chnames=chlist,
                        show=config['show_plots'], **config[task]['plot_args'])
-        elif task == 'evoked_std':
+        elif (task == 'evoked_std') or (task == 'erf_std'):
             data_arrays.append(extract_channels(label_tcs[1], label_names, chlist))
 
-            data_arrays = adjust_signs(data_arrays) if config['adjust_signs'] else data_arrays
+            # No need here - ignore 'adjust_signs' flag
+            # data_arrays = adjust_signs(data_arrays) if config['adjust_signs'] else data_arrays
+
             plot_array(data_arrays, x_values=x_values, fname=save_file, chnames=chlist,
                        show=config['show_plots'], **config[task]['plot_args'])
         elif task == 'compare_events':
@@ -138,7 +143,7 @@ def collect_conditions_evoked_data(in_file, lst_events, label_names, chlist):
 
     return data_arrays
 
-def adjust_signs(data_arrays):
+def adjust_signs(data_arrays, istart = 0, iend = -1):
     """
     For a list of identically shaped `nchan x ntimes` data arrays,
     possibly flip the signs of channels for the waveforms to better
@@ -148,6 +153,10 @@ def adjust_signs(data_arrays):
 
     Args:
         data_arrays(lst of ndarray): a list of `nchan x ntimes` data arrays
+        istart(int): starting time index of an interval used in correlation
+            calculation (inclusive)
+        iend(int): ending time index of an interval used in correlation
+            calculation (exclusive)
 
     Returns:
         data_arrays(lst of ndarray): the input list where in 2nd and further
@@ -161,8 +170,8 @@ def adjust_signs(data_arrays):
     res = [da0]
 
     for da in data_arrays[1:]:
-       s0 = np.einsum('ij,ij->i', da0, da) 
-       s1 = np.einsum('ij,ij->i', da0, -da)
+       s0 = np.einsum('ij,ij->i', da0[:,istart:iend], da[:,istart:iend]) 
+       s1 = np.einsum('ij,ij->i', da0[:,istart:iend], -da[:,istart:iend])
        flip = s1 > s0
 
        if np.any(flip):

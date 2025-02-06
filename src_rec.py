@@ -93,6 +93,8 @@ def src_rec(ss):
                                   on_split_missing='raise', verbose=ss.args['verbose'])
 
         # Get events, if any
+        # NOTE: events should have been saved at the pre-filtering step;
+        # events_file points to that step's result
         events_file = su.events_fif(ss, out_fif)    # Path to the events file
 
         if events_file.is_file():
@@ -137,11 +139,24 @@ def src_rec(ss):
                                            fwd, verbose = ss.args['verbose'])
         label_names = [l.name for l in labels]
 
+        # ---------------------------------------------------------------------
+        # This is an internal helper function living inside the main src_rec()
+        # routine. It uses sensor_data[] array for the record in question and
+        # beamformer weights W to form source level time courses
+        # ---------------------------------------------------------------------
         def get_and_save_ltcs(eID):
             """
             A helper function that wraps label time courses extraction and saving
             operations.
+
+            Args:
+                eID (int): if specified, it means that evoked data will be
+                    generated before saving the time course by calling
+                    `average_epoched_tcs()`. Mind that eID setting will be ignored if
+                    `config['do_evoked'] = False`
+
             """
+            # Returned label_tcs are nlabels x ntimes or nepochs x nlabels x ntimes
             label_tcs, label_wts, _ = beam_extract_label_time_course(sensor_data, data_cov, labels, fwd, W,
                                         mode = config["roi_time_course_method"],
                                         verbose = ss.args['verbose'])
@@ -159,8 +174,15 @@ def src_rec(ss):
             if ss.args['verbose'].upper() == 'INFO':
                 print(f'ROI time courses saved to {ltc_hdf5}')
 
+        # -- end of get_and_save_ltcs() ---------------------------------------
+
         if config['do_evoked']:
             for i, eID in enumerate(config['events_for_evoked']):
+                # `sensor_data (ndarray), n_epochs x nchan x ntimes` contains MEG sensor time
+                # courses for condition;
+                # `W (ndarray): nchan x nsrc` is an array of beamformer weights, so that the source
+                # time courses for epoch `i`can be found as `src_epoch = W.T @ sensor_data[i,:,:]`;
+                # `U (ndarray): `3 x nsrc` is an array of source orientations
                 sensor_data, W, U = epochs_beam_result[i]
 
                 # if eID has no associated epochs
