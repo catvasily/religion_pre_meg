@@ -67,9 +67,15 @@ Available steps:
 
     `'src_rec'`: MEG source reconstruction (inverse solution).
 
+    `'src_erf'`: generate low frequency source level ERFs
+
     `'plot_epochs'`: create overview plots of epoched data.
 
     `'plot_waveforms'`: grid plots of channel waveforms
+
+    `'pls_analysis'`: run PLS on epoched data
+
+    `'plot_pls_inflated_brain'`: display PLS z-scores on inflated brain surface
 
 """
 
@@ -90,8 +96,11 @@ from maxfilter import maxfilter
 from do_ica import do_ica
 from bem_model import bem_model
 from src_rec import src_rec
+from src_erf import src_erf
 from plot_epochs import plot_epochs
 from plot_waveforms import plot_waveforms
+from pls_analysis import pls_analysis
+from plot_pls_inflated_brain import plot_pls_inflated_brain
 import setup_utils as su
 
 __file__ = path.realpath(__file__)    # expand potentially relative path to a full one
@@ -144,8 +153,11 @@ class _app:
         'ica': do_ica,
         'bem_model': bem_model,
         'src_rec': src_rec,
+        'src_erf': src_erf,
         'plot_epochs': plot_epochs,
         'plot_waveforms': plot_waveforms,
+        'pls_analysis': pls_analysis,
+        'plot_pls_inflated_brain': plot_pls_inflated_brain,
     }
 
     def __call__(self, name, *args, **kwargs):

@@ -12,8 +12,11 @@
     #"to_run": ["input", "ica"],
     #"to_run": ["input", "bem_model"],
     #"to_run": ["input", "src_rec"],
+    #"to_run": ["input", "src_erf"],
     #"to_run": ["input", "plot_epochs"],
-    "to_run": ["input", "plot_waveforms"],
+    #"to_run": ["input", "plot_waveforms"],
+    "to_run": ["input", "pls_analysis"],
+    #"to_run": ["input", "plot_pls_inflated_brain"],
     #----------------------------
 
     # A list of subjects to process. When null or empty - all subjects in the source folder
@@ -23,8 +26,21 @@
     # only specified dates will be processed.
     # The date is expected to be an integer of the form: YYMMDD
     #"subjects": null,
-    #"subjects": ["45TDGV"],
-    "subjects": ["JYBZXP"],
+    "subjects": ["3KHMXV","45TDGV","5TM3XZ","L846DP","SXBT5E"],
+    # NOTE: subject "A388CU" excluded as it has only 149 ROIs present
+    #"subjects": [
+    #    "3KHMXV","5TM3XZ","9J2B9V","DTWDFD","extU2M7EY","HB57WT","KETDQV","NTDU8N","SXBT5E","WGB5JB",
+    #    "3V2AAK","9ZSUKT","EBYXXF","F2ESKX","HCUZQ4",   "SXNKDN","WXY728","3VKQNW","79BRLF","2RULAV",
+    #    "EEU5LY","FW9GP", "HDVLMJ","KX3NVJ","PAWEZ5",   "TCNM89","XJB3T2","3X47YB","7UFXKR","A7BF4V",
+    #    "EQMWG7","FX366H","HS76SM","L846DP","Q5UG4U",   "UGHYY9","XUAWB8","45TDGV","7YNEU7","AG8944",
+    #    "ET2PJN","FYE33Z","HX8F4X","QKR7UR","US5GA6",   "XULCX9","49D4JB","88FLB2","AS978K","ext6ADJ3D",
+    #    "G6H3NQ","J2GEED","LLXKA7","QSXJ4V","UTCZ7P",   "YAPAPT","4ESU5W","8TMH85","AZLLGK","extFQABY7",
+    #    "GHLDMF","J2WZ7A","LNM8HK","QVDAP2","V9HDQM",   "YAY7MU","8X9HBY","BMP66Z","extMCJQKQ","3EA2HH",
+    #    "RT2PGJ","V9V8F6","54RWW6","9BAJK3",   "CBFYGF","extRTPD9A","GVYFG2","K83Z5S","4YTMB6",
+    #    "NR4D56","RZWJ7", "VHF5LJ","ZFQWV7","59N82C",   "9E5YN3","extTVFMU4","GZFAWR","85JXDK",
+    #    "NSX5BE","SBVR2Y","W87LJY","EPAZT3","K22ZS3",   "K8RBJJ","RT6BPM","RV2RJL","W7NRH9","YRGNZY",
+    #    "ZMGPTL"	
+	#],	# "YYQQF8","KAGAJY" removed due to not having all 4 conditions present
 
     "N_ARRAY_JOBS": 1,          # Number of parralel jobs when running on CC cluster
                                 # Set this to 1 if not running an array job.
@@ -32,8 +48,8 @@
     "out_root": "preprocessed", # top folder name for all pipeline output files
     "pipeline_version": "A1",   # Pipeline version name. All processing results will
                                 # be placed in folder with this name
-    "verbose": "info",          # MNE Python verbose level to use
-    #"verbose": "warning",       # "warning" won't produce any message from MNE functions
+    #"verbose": "info",          # MNE Python verbose level to use
+    "verbose": "warning",       # "warning" won't produce any message from MNE functions
                                 # unless there are warnings or errors 
     "seed": 12345,              # Pipeline-wide seed to initialize random generators
     "file_name_warning": "This filename",   # Start of MNE's warning message regarding
@@ -52,7 +68,17 @@
             "mri": "/project/6019337/databases/religion/bids/preprocessed_23.1.3/sourcedata/freesurfer",
 
             "ct_file": "raw/ct_sparse.fif", # MEG system cross talk .fif file (usually in meg/raw folder)
-            "fc_file": "raw/sss_cal.dat"    # MEG system fine calibration file
+            "fc_file": "raw/sss_cal.dat",   # MEG system fine calibration file
+            #"subjects_info_csv": "/project/6019337/databases/religion/psy/allBasicInfoAugmented.csv",
+            "subjects_info_csv": "/project/6019337/amoiseev/mycode/python/religion/description/allBasicInfoAugmented.csv",
+
+            # Path to the folder with MATLAB source code for PLS analysis
+            "path_to_matlab_pls": "/project/6019337/vvakorin/sdata3/distrib/plscmd",
+
+            # Path to FreeSurfer's fsaverage subject data
+            "fsaverage_dir": "/home/amoiseev/projects/rpp-doesburg/amoiseev/data/mne_data/MNE-fsaverage-data",
+            # Path to .csv file with Destrieux atlas channels ordering
+            "destrieux_order": "/home/amoiseev/projects/rpp-doesburg/amoiseev/data/mne_data/MNE-fsaverage-data/fsaverage/label/destrieux_atlas_ordered.csv" 
         },
 
         "ub2": {
@@ -64,7 +90,16 @@
             "mri": "/data/religion/freesurfer",
 
             "ct_file": "raw/ct_sparse.fif", # MEG system cross talk .fif file (usually in meg/raw folder)
-            "fc_file": "raw/sss_cal.dat"    # MEG system fine calibration file
+            "fc_file": "raw/sss_cal.dat",   # MEG system fine calibration file
+            "subjects_info_csv": "description/allBasicInfoAugmented.csv",
+
+            # Path to the folder with MATLAB source code for PLS analysis
+            "path_to_matlab_pls": "plscmd",
+
+            # Path to FreeSurfer's fsaverage subject data
+            "fsaverage_dir": "/home/alexm/mne_data/MNE-fsaverage-data",
+            # Path to .csv file with Destrieux atlas channels ordering
+            "destrieux_order": "/home/alexm/mne_data/MNE-fsaverage-data/fsaverage/label/destrieux_atlas_ordered.csv" 
         },
 
         "other": {
@@ -76,7 +111,16 @@
             "mri": "/data/religion/freesurfer",
 
             "ct_file": "raw/ct_sparse.fif", # MEG system cross talk .fif file (usually in meg/raw folder)
-            "fc_file": "raw/sss_cal.dat"    # MEG system fine calibration file
+            "fc_file": "raw/sss_cal.dat",   # MEG system fine calibration file
+            "subjects_info_csv": "description/allBasicInfoAugmented.csv",
+
+            # Path to the folder with MATLAB source code for PLS analysis
+            "path_to_matlab_pls": "plscmd",
+
+            # Path to FreeSurfer's fsaverage subject data
+            "fsaverage_dir": "/mne_data/MNE-fsaverage-data",
+            # Path to .csv file with Destrieux atlas channels ordering
+            "destrieux_order": "/home/alexm/mne_data/MNE-fsaverage-data/fsaverage/label/destrieux_atlas_ordered.csv" 
         }
     },   # end of "hosts"
 
@@ -209,7 +253,6 @@
         "remove_bad": {
             "limit": 7.0,
             "duration": 5.0,
-            #"duration": 150.0,  # QQQ
             "min_count": 5,
             "return_scores": false,
             "origin": "auto",
@@ -465,18 +508,20 @@
     "src_rec": {
         "in_dir": "icafiltered",                # Step input folder relative to root/meg/processed/<pipeline_version>
 
-        #"out_dir": "beamformed",                # Step output folder relative to root/meg/processed/<pipeline_version>
-        "out_dir": "beamformed-classic",        # QQQQ
+        #"out_dir": "beamformed-dual-state",                # Step output folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "beamformed-classic",        # 
 
-        #"files": null,                          # A list of files to process; all .fif files if null
-        "files": ["JYBZXP_task_run1_raw_filt_tsss_ica.fif"],
-        "task_only": false,                      # Flag to process only task data when 'files' = null
-        "do_evoked": true,                     # flag to reconstruct evoked response; if set will skip non-task
-                                                # files even if explicitly specified in the files list
+        "files": null,                          # A list of files to process; all .fif files if null
+        #"files": ["JYBZXP_task_run1_raw_filt_tsss_ica.fif"],
+        "task_only": true,                      # Flag to process only task data when 'files' = null
+        "do_evoked": true,                      # flag to reconstruct evoked response; if set will skip non-task
+                                                # files even if explicitly specified in the files list; source
+                                                # rec for task data should have been done already
+                                                # when false - evoked responses won't be cacluated
         "events_for_evoked": [111, 121, 131, 141],  # Event codes for evoked (phase-locked) responses
                                                 # reconstruction
         #"use_dual_state_beam": true,            # flag to use dual state beamformer instead of a classic one
-        "use_dual_state_beam": false,            # QQQQ
+        "use_dual_state_beam": false,            # 
 
         "sensor_channels_for_src_rec": "meg",   # channel picks: a string like "meg", "grad", "mag" 
         "atlas": "destrieux",                   # MRI atlas for ROIs definition; see "parcellations" below
@@ -556,7 +601,7 @@
         "epochs": {
             "t_range": [-0.5, 4.0],     # Epoch time bounds relative to the trigger, s
             "t_control": [-0.5, 0.0],   # Control interval, s
-            "t_active": [0.0, 4.0],     # Active interval, s
+            "t_active": [1.0, 3.5],     # Active interval, s
             "btn_mask": "0xF00",        # Events ID mask to select all button-related events
             "non_btn_mask": "0xFF",     # Events ID mask to filter out all button-related events
 
@@ -585,7 +630,7 @@
                 "reject_tmin": null,
                 "reject_tmax": null,
                 "detrend": null,
-                "on_missing": "raise",
+                "on_missing": "warn",
                 "reject_by_annotation": true,
                 "metadata": null,
                 "event_repeated": "error"
@@ -632,6 +677,27 @@
             "regexp": null,
             "sort": true
         }
+    },
+
+    # -------------------------
+    # 'src_erf' step settings
+    # -------------------------
+    "src_erf": {
+        "in_dir": "beamformed-classic",                # Step input folder relative to root/meg/processed/<pipeline_version>
+
+        #"out_dir": "beamformed-dual-state",                # Step output folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "beamformed-classic",        # 
+
+        "files": null,                          # A list of files to process; all .fif files if null
+        #"files": ["JYBZXP_task_run1_raw_filt_tsss_ica.fif"],
+        "input_file_type" : "hdf5",             # extension of the input source files
+        "suffix": "_erf",                       # Output files suffix. In: name.hdf5; out: name<suffix>.hdf5
+        "fmax": 30.0,                           # LP filter cut off frequency, Hz, or null (then now filtering)
+        "filter_order": 4,                      # LP IIR filter order; effective order will be twice as large
+        "taper_window": "hamming",              # taper type - see scipy.signal.get_window()
+        "sign_adjust_interval": [0.0, 3.5],     # time interval to use to determine if waveform sign should be flipped
+                                                # relative to the trigger (see plot_waveforms.py, adjust_signs()).
+        "target_sample_rate": 100               # If not null, ERFs will be downsampled to this rate, in Hz
     },
 
     # ----------------------
@@ -688,12 +754,15 @@
     # 'plot_waveforms' settings
     # ----------------------
     "plot_waveforms": {
-        "task": "compare_beams",   # Compare results of different beamformer types
-        #"task": "evoked_std",       # Show evoked response and its STD
+        #"task": "compare_beams",   # Compare results of different beamformer types
+        #"task": "evoked_std",      # Show evoked response and its STD
+        "task": "erf_std",          # Show ERF response and its STD
         #"task": "compare_events",   # Evoked responses for different conditions
-        "in_dir": "beamformed",    # Step input folder relative to root/meg/processed/<pipeline_version>
+        #"in_dir": "beamformed-dual-state",    # Step input folder relative to root/meg/processed/<pipeline_version>
+        "in_dir": "beamformed-classic",    # Step input folder relative to root/meg/processed/<pipeline_version>
         "out_dir": "plots/waveforms",  # Step output folder relative to root/meg/processed/<pipeline_version>
-        "files": ["JYBZXP-task_run1-ico-4-destrieux-ltc-evoked-121.hdf5"],
+        #"files": ["L846DP-task_run1-ico-4-destrieux-ltc-evoked-141.hdf5"],
+        "files": ["L846DP-ico-4-destrieux-ltc_erf_141.hdf5"],
             
         # list if channels (ROIs) to plot; if null - all will be plotted
         "channels": ["G_and_S_occipital_inf-lh", "G_cuneus-lh", "G_oc-temp_lat-fusifor-lh",
@@ -704,6 +773,7 @@
             "S_parieto_occipital-lh"],
 
         "adjust_signs": true,   # Try to take into account possible sign flips of the waveforms
+                                # when comparing them. Ignored for "evoked_std" task
         "show_plots": true,
         "save_plots": true,
         "save_as_type": "png",       # saved plot image type
@@ -741,6 +811,22 @@
             }
         },
 
+        "erf_std": {
+            "plot_type": "erf_and_std",
+            "plot_args": {
+                "x_limits": null,
+                "y_limits": null,
+                "colors": null,
+                "cond_names": ["ERF", "std"], 
+                "xlabel": "Time",
+                "ylabel": "pseudo-Z",
+                "suptitle": "Evoked response field and its STD",
+                "ncols": 3,
+                "cmap": "tab10",
+                "dpi": 300
+            }
+        },
+
         "compare_events": {
             "plot_type": "compare_events",
             "plot_args": {
@@ -755,6 +841,178 @@
                 "dpi": 300
             }
         }
+    },
+
+    # ----------------------
+    # 'pls_analysis' settings
+    # ----------------------
+    "pls_analysis": {
+        #"task": "erf_mc_2groups1img",           # Which PLS is being run: "erf_mc_<2 or 4>groups1img","erf_mc_1group4img"
+                                                # "erf_mc_2group4img", "erf_mc_pooled4img", "erf_contrast_2group2img",
+                                                # "erf_contrast_2group4img", "compare_corrs_2groups1img"
+        #"task": "erf_mc_4groups1img",
+        #"task": "erf_mc_1group4img",
+        #"task": "erf_mc_2group4img",
+        #"task": "erf_mc_pooled4img",
+        #"task": "erf_contrast_2group2img",
+        #"task": "erf_contrast_2group4img",
+        "task": "compare_corrs_2groups1img",
+
+        "event_id": 141,                        # the event code to use for "erf_mc_<2 or 4>groups1img" task
+        "group_id": 0,                          # a group (0 or 1) to be used for "erf_mc_1group4img" task
+        "img_events": [111,121,131,141],        # event codes to use for "erf_mc_1group4img" task
+        #"img_events": [111,121],                # event codes to use for 'erf_contrast_2group2img' task
+        #"contrasts": [1,-1,1,-1],              # contrasts - only used for contrast tasks
+        "contrasts": [1,-3,1,1,-1,3,-1,-1],
+        "erf_power": true,                      # Flag to use ERF power time course instead of ERF itself
+        "pls_interval": [1, 2],                 # time interval used as PLS features rel to the trigger, s
+                                                # (should usually be equal to 'src_rec' active interval)
+        #"return_precalculated_result": false,   # do not run PLS, use results from .mat file
+        "return_precalculated_result": true,    # 
+        "adjust_signs": false,                  # If true, try to align signs of evoked waveforms to that of
+                                                # the 1st subject of all being averaged for ERF
+        "in_dir": "beamformed-classic",        
+        "out_dir": "pls-results/1-2s",        
+        "files": null,                          # !!! files should always be null for this step !!!
+        "input_file_type": "hdf5",              # extension of the input source files
+        "create_subjects_out_folders": false,   # When false - prevent creating subjects subfolder
+                                                # structure in the output directory. Then ALL RESULTS
+                                                # WILL GO DIRECTLY TO THE out_dir !!!
+        "show_plots": true,                    # Flag to show interactive plots
+        "sID_colname": "computer_code",
+        "bias_colname": "bias",                 # SCZ/ASD group identifier column name in .csv file
+        "bin_belief_colname": "God.number.scored.values.only",
+                                                # believer (1) - non-believer (0) column namd in .csv file
+        "santa_clara_colname": "santa.total.values.only",   # Santa Clara scores
+
+        "bias_belief_groups": {                 # This is a mapping of bias/belief combinations to 4
+            "(0, 1)": 0,
+            "(1, 1)": 1,
+            "(0, 0)": 2,
+            "(1, 0)": 3
+        },
+
+        "pls_options_mc": {                     # PLS options settings for all mean-centered tasks
+            "method": 1,
+            "num_perm": 5000,
+            "num_boot": 5000
+        },
+
+        "pls_options_contrast": {               # PLS options settings for (non-rotated) contrast tasks
+            "method": 2,
+            "meancentering_type": 3,
+            "num_perm": 5000,
+            "num_boot": 5000
+        },
+
+        "img_types": {            # Types of images corresponding to even codes
+            "111": "God",
+            "121": "Thing",
+            "131": "Human",
+            "141": "Super"
+        },
+
+        "heatmap": {
+            "subject4labels": "3KHMXV", # Subject ID to get the ROI names from; must have src-rec 
+                                        # evoked ERFs on current host
+            "latent_var": 1,            #  Latent variable number for which to plot the Z-scores 
+            "t_range": null,            # Time range, s; if null - use 'pls_interval'
+            "color_min": -4,            # Z-score colorbar limits; if null - will be set automatically
+            "color_max": 4,
+            "xlabel": "Time (seconds)",
+            "ylabel": "ROIs",
+            "cbar_label": "Z-score",
+            "cmap": "jet",              # cbar colormap name
+            "SR": 100,                  # Sampling rate, 1/s; if null - use ['src_erf']['target_sample_rate']
+            "out_dir": "plots/pls/1-2s",     # Plots output folder relative to root/meg/processed/<pipeline_version>
+            "figsize": [12,8],          # Figure size for PLS plots, inches
+            "figsize_ccd": [19,9],     # Figure size for corr dist comparison plots, inches
+            "fontsize_y": 3,
+            "bbox": [0.125, 0.11, 0.9, 0.61],   # bounding box for heatmap plot inside the figure
+                                                # Space is left for contrasts bar plot
+            "dpi": 300                  # figure resolution
+        }, 
+
+        "barplot": {                    # Settings for bar plot of a contrast
+            "bbox": [0.125, 0.80, 0.2, 0.14],   # bounding box rel inside the heatmap figure
+            "bwidth": 12                # Width of the bar
+        },
+
+        "medians": {                            # Settings for the medians plot
+            "bbox": [0.375, 0.80, 0.47, 0.14]   # bounding box rel inside the heatmap figure
+        },
+
+        "compare_corrs": {              # Settings for correlation distributions comparisons
+            #"num_boot": 1000,
+            "num_boot": 50,             # QQQ
+            "method": "pearson",        # Correlation method: "pearson" or "spearman"
+            "mask_insignif_CI": true,   # In heatmap display, mask points where confidence interval contains 0 
+            "hm_what": "hedges_g",      # what to plot as a heatmap: either "effect_sizes" or "hedges_g"
+            "hm_alpha": 0.05,           # Significance threshold for heatmap; set alpha = 1 to include all
+            "hm_subplots_titles":       # Titles for cases 'corr1>0, corr2>0','corr1>0, corr2<0',
+                                        # 'corr1<0, corr2>0','corr1<0, corr2<0'
+                ["C_scz>0, C_asd>0","C_scz>0, C_asd<0","C_scz<0, C_asd>0","C_scz<0, C_asd<0"],
+            "kwargs": {                 # Additional parameters to bootes_multivariate() call
+                "condition_names": ["SCZ", "ASD"],
+                "do_fig": false,
+                "save_fig": false,
+                "save_path": "./",
+                "save_effect_sizes": false,
+                "es_path": "./effect_sizes.csv",
+                "save_g": false,
+                "g_path": "./hedges_g.csv",
+                "alpha": 0.05,
+                "save_CI": false,
+                "CI_lower_path": "./CI_lower.csv",
+                "CI_upper_path": "./CI_upper.csv",
+                "save_bootstrap_means_A": false,
+                "bootstrap_means_A_path": "./bootstrap_means_A.csv",
+                "save_bootstrap_means_B": false,
+                "bootstrap_means_B_path": "./bootstrap_means_B.csv",
+                "save_dependent": null,
+                "save_covariate": "None\n)"
+            }
+        }
+    },
+
+    # ----------------------
+    # 'plot_pls_inflated_brain' settings
+    # ----------------------
+    # IMPORTANT: PLS data to be plotted is
+    # determined by 'pls_analysis' key setting
+    # ----------------------------------------
+    "plot_pls_inflated_brain": {
+        "time": 1.23,                   # Time value for z-scores. MUST BELONG TO pls_analysis/pls_interval
+        "cbar_lims": [-4, 4],           # Color scale limits in user units
+        "colorbar": false,              # Flag to display a colorbar
+        "in_dir": "pls-results/1-2s",
+        "out_dir": "plots/pls/1-2s",    
+        "show_plots": true,             # Flag to show interactive plots
+        "atlas": "aparc.a2009s",        # Destrieux atlas name in FreeSurfer
+        "hemi": "both",                 # Valid values are: "both","lh","rh","split" 
+        "expand_values_to_roi": true,   # If true, the value assigne to label's COM is expanded
+                                        # to all label's vertices. SHOULD ALWAYS BE TRUE FOR NOW
+        "show_atlas": true,             # Flag to display parcellation
+        "colormap": "jet",             # Typically a string defining the palette name, or 'auto'.
+        "alpha_data": 1.0,              # (float): opacity of the data overlay on the cortex surface
+        "smoothing_steps": null,        # (int or 'Nearest' or null): smoothing when plotting data. An int
+                                        # value explicitly sets the number of vertices for smoothing.
+        "rois_to_mark": null,           # (list or null): if supplied, a list of names of ROIs 
+        "show_vertices": false,         # Flag to plot dots for vertices
+        "scale_factor": 0.2,            # Size of plotted dots relative to 1 cm
+        "color_dots": "white",          # color specification of plotted vertices
+        "alpha_cortex": 1.0,            # opacity of the cortex surface and the vertex dots
+        "resolution": 50,               # int value for the resolution of the vertex dots (spheres)
+        "views": [                      # Views to dispaly: ["view-name","hemi"]
+                ["frontal","lh"],
+                ["frontal","rh"],
+                ["par","lh"],
+                ["par","rh"],
+                ["axial","lh"],
+                ["ventral","lh"]
+            ],
+       "all_in_one": true,             # If true, all views will be put into one figure
+       "figsize":[[1800,300], 400]      # Figure sizes for all_in_one = true, false
     }
 }
 

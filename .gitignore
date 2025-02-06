@@ -172,3 +172,13 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+description/PLS_summary_250107.xlsx
+plot_alpha_power.py
+description/.~lock.processing.xlsx#
+description/AQ-BRIEF-28 questions-w_subscales  .pdf
+description/Notes_phase2_abbrev_file_13jan2025.docx
+description/SFU_Religious_Study_Phase_1_scored_22jan2025_version_2.0.xlsx
+description/SFU_Religious_Study_Phase_2_Q_abbrv_13jan2025.xlsx
+description/SPQ-BR Davidson et al. 2016-w_subscales.pdf
+description/original_BMMR_guidebook.pdf
+allResults/bootes_ES/testFigures

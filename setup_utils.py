@@ -4,6 +4,7 @@
 from datetime import datetime
 from pathlib import Path
 import socket
+import re
 
 def is_valid_sid(s):
     """
@@ -293,9 +294,13 @@ def get_subjects_for_job(all_subjects, ijob, njobs):
 
             slist = all_subjects[istart:iend]
 
-    print(f'Subjects to process for array job #{ijob}:')
-    print(slist)
-    print('\n')
+    # Ensure that subject list is printed only once
+    if not hasattr(get_subjects_for_job, "called_once"):
+        get_subjects_for_job.called_once = True
+        print(f'Subjects to process for array job #{ijob}:')
+        print(slist)
+        print('\n')
+
     return slist
 
 def get_sdict_for_job(ss, subjects):
@@ -330,6 +335,25 @@ def files_to_process(ss, step):
     MRI part (including BEM model and source space construction) uses a different directory
     structure - see `mri_subjects_to_process()` for details.
 
+    When a new processing step is added, the following is expected for this
+    generator to work.
+
+    1. 'in_dir', 'out_dir', 'files' keys should be specified in the step's
+    configuration in the main JSON file.
+
+    2. Add this step to `DataHost`'s methods `get_step_in_dir()`, `get_step_out_dir()`
+
+    3. `DataHost`'s method `get_step_out_file()` should be updated with
+    this step's settings. In particular, key 'suffix' must be specified
+    in most cases for proper generation of the output file names.
+
+    4. Optionally 'input_file_type' should be set in JSON - otherwise
+    'fif' is assumed.
+
+    5. Optionally, 'create_subjects_out_folders' key may be added and set
+    to 'false' in JSON - this will prevent creating individual subject's
+    output folders, and all results will be dumped into 'out_dir'
+
     Args:
         ss(obj): reference to this app object
         step(str): name of the step being executed
@@ -361,12 +385,35 @@ def files_to_process(ss, step):
         subjects = get_sdict_for_job(ss, subjects)
 
     config = ss.args[step]
+    create_out_folders = True
+
+    # Check if we need to create individual subfolders for each subjects
+    # results in the out_dir
+    create_out_folders_key = 'create_subjects_out_folders'
+
+    if create_out_folders_key in config:
+        if config[create_out_folders_key] == False:
+            create_out_folders = False
+
+    # Set input file type use. This is .fif unless specified
+    # otherwise
+    ftype = 'fif'
+    ftype_key = 'input_file_type'
+
+    if ftype_key in config:
+        ftype = config[ftype_key]
+
+    ptrn = f'*.{ftype}'
 
     for subj in subjects:
         for date in subjects[subj]:
             # in_,out_folder define locations for specific subj and specific date
             in_folder = get_subj_subfolder(in_dir, subj, date)
-            out_folder = get_subj_subfolder(out_dir, subj, date)
+
+            if create_out_folders:
+                out_folder = get_subj_subfolder(out_dir, subj, date)
+            else:
+                out_folder = out_dir
 
             if not out_folder.exists():
                 out_folder.mkdir(parents=True, exist_ok=True)
@@ -374,7 +421,7 @@ def files_to_process(ss, step):
             fif_files = config['files']
 
             if fif_files is None:
-                fif_files = list(in_folder.glob('*.fif'))
+                fif_files = list(in_folder.glob(ptrn))
             else:
                 fif_files = [in_folder / f for f in fif_files]
 
@@ -382,7 +429,6 @@ def files_to_process(ss, step):
                 out_basename = ss.data_host.get_step_out_file(step, in_fif)
                 out_fif = out_folder / out_basename
                 yield in_fif, out_fif
-
 
 def events_fif(ss, fif):
     """
@@ -601,8 +647,16 @@ class DataHost:
         self.pipeline_version = config['pipeline_version']
         self.meg = config['hosts'][host]['meg']
         self.mri = config['hosts'][host]['mri']
+        self.fs_dir = config['hosts'][host]['fsaverage_dir']
         self.ct_file = config['hosts'][host]['ct_file']
         self.fc_file = config['hosts'][host]['fc_file']
+        self.subjects_info_csv = Path(config['hosts'][host]['subjects_info_csv'])
+        self.path_to_matlab_pls = config['hosts'][host]['path_to_matlab_pls']
+
+        if config['src_rec']['atlas'] == 'destrieux':
+            self.atlas_ordering_csv = Path(config['hosts'][host]['destrieux_order'])
+        else:
+            raise NotImplemented('Ordering for non-Destrieux atlas requested')
 
     def get_step_in_dir(self, step):
         """
@@ -616,7 +670,8 @@ class DataHost:
         """
         if step == 'prefilter':
             in_dir = self.root / self.meg / self.config[step]['in_dir']
-        elif step in ('maxfilter', 'ica', 'src_rec', 'plot_epochs','plot_waveforms'):
+        elif step in ('maxfilter', 'ica', 'src_rec', 'src_erf',
+                      'plot_epochs','plot_waveforms', 'pls_analysis'):
             in_dir = self.root / self.meg / self.config["out_root"] / \
                     self.pipeline_version / self.config[step]['in_dir']
         else:
@@ -634,8 +689,8 @@ class DataHost:
         Returns:
             path(Path): full path to the folder
         """
-        if step in ('prefilter', 'maxfilter', 'ica', 'src_rec', 'plot_epochs',
-                'plot_waveforms'):
+        if step in ('prefilter', 'maxfilter', 'ica', 'src_rec',
+                'src_erf', 'plot_epochs', 'plot_waveforms', 'pls_analysis'):
             out_dir = self.root / self.meg / self.config["out_root"] / \
                     self.pipeline_version / self.config[step]['out_dir']
         else:
@@ -656,13 +711,17 @@ class DataHost:
             basename(str): the base name of the output file
 
         """
-        # TODO: this function does not really belong to the DataHost
+        # Suggestion: this function does not really belong to the DataHost
         # object, because it does not use host-specific data
         f = Path(in_file)
         stem = f.stem
         ext = f.suffix
 
         if step in ('prefilter', 'maxfilter', 'ica', 'src_rec'):
+            out_name = stem + self.config[step]['suffix'] + ext
+        elif step == 'src_erf':
+            stem = re.sub(r'task_run\d+-', '', stem) 
+            stem = stem.replace('evoked-','')
             out_name = stem + self.config[step]['suffix'] + ext
         elif step == 'plot_epochs':
             out_name = stem + '_'+self.config[step]['plot_type'] + \
@@ -671,6 +730,40 @@ class DataHost:
             task = self.config[step]['task']
             out_name = stem + '_'+self.config[step][task]['plot_type'] + \
                     '.' + self.config[step]['save_as_type']
+        elif step == 'pls_analysis':
+            cfg = self.config[step]
+            task = cfg['task']
+
+            if (task == 'erf_mc_2groups1img') or \
+                    (task == 'erf_mc_4groups1img'):
+                out_name = 'pls_'+ task + \
+                    '_' + str(cfg['event_id']) + '.mat'
+            elif task == 'compare_corrs_2groups1img':
+                out_name = task + \
+                    '_' + str(cfg['event_id']) + '.hdf5'
+            elif task == 'erf_mc_1group4img':
+                out_name = 'pls_'+ task + \
+                    '_g' + str(cfg['group_id']) + '.mat'
+            elif (task == 'erf_mc_2group4img') or \
+                    (task == 'erf_mc_pooled4img'):
+                out_name = 'pls_'+ task + '.mat'
+            elif (task == 'erf_contrast_2group2img') or \
+                (task == 'erf_contrast_2group4img'):
+                str_eid = ''
+                for e in cfg['img_events']:
+                    str_eid += '_' + str(e)
+
+                str_contrast = '_'
+                for c in cfg['contrasts']:
+                    str_contrast+=str(c)
+
+                out_name = 'pls_'+ task + str_eid + str_contrast + '.mat'
+
+            if cfg['erf_power']:
+                if 'pls_' in out_name:
+                    out_name = out_name.replace('pls_','pls_pwr_')
+                if 'compare_' in out_name:
+                    out_name = out_name.replace('compare_','compare_pwr_')
         else:
             raise ValueError(f'Invalid step specified: {step}')
 
@@ -695,6 +788,15 @@ class DataHost:
         """
         return self.root / self.mri 
 
+    def get_fsaverage_dir(self):
+        """
+        Return a path to the FreeSurfer's `fsaverage` subject
+        data. This is a path to a folder containing a single subfolder
+        `fsaverage`.
+        """
+
+        return Path(self.fs_dir)
+
     def get_subject_bem_dir(self, mri_subject):
         """
         Return a path to MEG subject's BEM data folder.
@@ -708,4 +810,26 @@ class DataHost:
 
         """
         return self.get_mri_subjects_dir() / mri_subject / 'bem'
+
+    def get_subjects_info_csv(self):
+        """
+        Return a path to .csv with subjects behavioral test results.
+
+        Returns:
+            csv_path(Path): path to the .csv file
+
+        """
+        return self.subjects_info_csv
+
+    def get_ordering_csv(self):
+        """
+        Return a path to .csv that specifies labels ordering used
+        in ROI heatmap plots. This file is specific to the ROI atlas
+        being used.
+
+        Returns:
+            csv_path(Path): path to the .csv file
+
+        """
+        return self.atlas_ordering_csv
 
