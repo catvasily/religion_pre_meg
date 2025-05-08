@@ -36,10 +36,10 @@ def run_pls(lst_dmat, lst_nsubj, ncond, option, path_to_matlab_pls, args_mat = "
                 be set arbitrarily.
                 
         Returns:
-            res(dict): a dictionary of results;  see 'pls_analysys.m'
-                for desctiption.
+            res(dict): a dictionary of results, converted from a matlab structure
+                returned by 'pls_analysys.m'.
 
-        *Result fields description*
+        **res** dictionary fields description copied from matlab comments::
 
          'method:                 PLS option                                   ',
          '                        1. Mean-Centering Task PLS                   ',
@@ -158,6 +158,7 @@ def run_pls(lst_dmat, lst_nsubj, ncond, option, path_to_matlab_pls, args_mat = "
          '                        if it is not 0.                              ',
          '        cormode:        Use Natasha's correlation mode if it         ',
          '                        is not 0.                                    ',
+
     """
     if return_precalculated_result == False:
         # matlab expects doubles everywhere by default

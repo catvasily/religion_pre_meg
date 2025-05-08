@@ -58,26 +58,7 @@ def plot_pls_inflated_brain(ss):
     data = zscores[lv,:,itime]
     
     # Create a set of Label objects corresponding to label_names
-    atlas_name = ss.args['src_rec']['atlas']
-    atlas = ss.args['src_rec']['parcellations'][atlas_name]
-    atlas_labels = mne.read_labels_from_annot(
-        "fsaverage",
-        parc = atlas,
-        hemi = hemi if hemi != 'split' else 'both',
-        surf_name='white', 
-        subjects_dir=fs_dir,
-        sort=True,                       # Sort labels in alphabetical order
-        verbose=verbose
-    )
-
-    # atlas_labels may in principle be ordered differently than those in .hdf5 file,
-    # and contain extra (unused) labels.
-    dd = dict()
-    for l in atlas_labels:
-        dd[l.name] = l
-
-    # Create a label list in accordance with label_names
-    labels = [dd[name] for name in label_names]
+    labels = construct_label_objects(ss, label_names)
 
     # Expand ROI single value to the whole ROI
     # The data shape becomes (nvertices,)
@@ -95,6 +76,8 @@ def plot_pls_inflated_brain(ss):
         # Display and save each view in a separate figure
         kwargs_brain = {'size': config['figsize'][1]}
 
+    atlas_name = ss.args['src_rec']['atlas']
+    atlas = ss.args['src_rec']['parcellations'][atlas_name]
     brain = view_inflated_brain_data(
             atlas = atlas,
             show_atlas = config['show_atlas'],
@@ -144,4 +127,45 @@ def plot_pls_inflated_brain(ss):
                 input(f"View: {view}, hemi: {hemi}. Press ENTER to continue...")
                 brain.save_image(png.replace('.png',f'_{view}_{hemi}_t{config["time"]}s.png'))
 
+def construct_label_objects(ss, label_names):
+    """
+    Given the names of labels from specified atlas, construct corresponding
+    MNE Python `Label` objects.
+
+    Args:
+        ss(Object): ref to this app object
+        label_names(list of str): list of label names; each name should belong
+            to selected atlas
+
+    Returns:
+
+
+    """
+    # Create a set of Label objects corresponding to label_names
+    verbose = ss.args['verbose']
+    config = ss.args['plot_pls_inflated_brain']
+    atlas_name = ss.args['src_rec']['atlas']
+    atlas = ss.args['src_rec']['parcellations'][atlas_name]
+    fs_dir = ss.data_host.get_fsaverage_dir()
+    hemi = config['hemi']
+
+    atlas_labels = mne.read_labels_from_annot(
+        "fsaverage",
+        parc = atlas,
+        hemi = hemi if hemi != 'split' else 'both',
+        surf_name='white', 
+        subjects_dir=fs_dir,
+        sort=True,                       # Sort labels in alphabetical order
+        verbose=verbose
+    )
+
+    # atlas_labels may in principle be ordered differently than those in .hdf5 file,
+    # and contain extra (unused) labels.
+    dd = dict()
+    for l in atlas_labels:
+        dd[l.name] = l
+
+    # Create a label list in accordance with label_names
+    labels = [dd[name] for name in label_names]
+    return labels
 

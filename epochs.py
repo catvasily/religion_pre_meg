@@ -132,27 +132,36 @@ def get_events_per_epoch(epochs):
 
     return events_per_epoch
 
-def get_epochs_for_event(epochs, events_per_epoch, eID):
+def get_epochs_for_event(epochs, events_per_epoch, eID, return_idx = False):
     """
     Return a subset of epochs which contain specified event.
 
     Args:
-        epochs(Epochs): the MNE Python Epochs object
+        epochs(Epochs | collection): the MNE Python Epochs object, or any collection
+            object supported by `len()` function
         events_per_epoch(list of ndarray): a list of events arrays, one for
             each epoch. Each ndarray is `nevents_in_epoch x 3` array of ints
             as described in MNE Python docs. Note that the event sample index
             is counted from the start of the epoch (not from the trigger)
         eID (int): event ID (event code). Event codes are listed in the 3d
-            column of the events array for the epoch: `ids = events[:,2] 
+            column of the events array for the epoch: `ids = events[:,2]`
+        return_idx(bool): flag to return boolean indicator list for epochs
+            corresponding to requested eID
 
     Returns:
         epochs4id(Epochs): the MNE Python Epochs object for specified event ID
+            (default), or a tuple `(epochs4id, idx)`, where `idx` is a list of 
+            boolean values, and `len(idx)` equals to `len(epochs)`
 
     """
     if len(epochs) != len(events_per_epoch):
         raise ValueError('Lengths of "epochs" and "events_per_epoch" must match')
 
     idx = [(eID in earray[:,2]) for earray in events_per_epoch]
+
+    if return_idx:
+        return epochs[idx], idx
+
     return epochs[idx]
 
 def epochs_noise_and_inv_cov(epochs, conf, rcond = 1e-15, verbose = None):

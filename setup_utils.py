@@ -670,7 +670,7 @@ class DataHost:
         """
         if step == 'prefilter':
             in_dir = self.root / self.meg / self.config[step]['in_dir']
-        elif step in ('maxfilter', 'ica', 'src_rec', 'src_erf',
+        elif step in ('maxfilter','ica','src_rec','src_erf','src_hilbert',
                       'plot_epochs','plot_waveforms', 'pls_analysis'):
             in_dir = self.root / self.meg / self.config["out_root"] / \
                     self.pipeline_version / self.config[step]['in_dir']
@@ -689,7 +689,7 @@ class DataHost:
         Returns:
             path(Path): full path to the folder
         """
-        if step in ('prefilter', 'maxfilter', 'ica', 'src_rec',
+        if step in ('prefilter','maxfilter','ica','src_rec','src_hilbert',
                 'src_erf', 'plot_epochs', 'plot_waveforms', 'pls_analysis'):
             out_dir = self.root / self.meg / self.config["out_root"] / \
                     self.pipeline_version / self.config[step]['out_dir']
@@ -717,7 +717,7 @@ class DataHost:
         stem = f.stem
         ext = f.suffix
 
-        if step in ('prefilter', 'maxfilter', 'ica', 'src_rec'):
+        if step in ('prefilter','maxfilter','ica','src_rec','src_hilbert'):
             out_name = stem + self.config[step]['suffix'] + ext
         elif step == 'src_erf':
             stem = re.sub(r'task_run\d+-', '', stem) 
@@ -738,6 +738,25 @@ class DataHost:
                     (task == 'erf_mc_4groups1img'):
                 out_name = 'pls_'+ task + \
                     '_' + str(cfg['event_id']) + '.mat'
+            elif (task == 'henv_mc_4groups1img') or \
+                    (task == 'henv_std_mc_4groups1img'):
+                fmin, fmax = cfg['band']
+                str_band = f'_{fmin:.0f}-{fmax:.0f}Hz_'
+                out_name = task \
+                     + str_band + str(cfg['event_id']) + '.mat'
+            elif task in ('henv_std_sm_4groups1img','henv_std_sm_santa1img'):
+                fmin, fmax = cfg['band']
+                str_band = f'_{fmin:.0f}-{fmax:.0f}Hz_'
+                out_name = task \
+                     + str_band + str(cfg['event_id']) + '.pkl'
+            elif task in ('henv_std_sm_4groups2img','henv_std_sm_santa2img'):
+                fmin, fmax = cfg['band']
+                str_band = f'_{fmin:.0f}-{fmax:.0f}Hz_'
+                str_eid = 'img'
+                for e in cfg['img_events']:
+                    str_eid += '_' + str(e)
+                out_name = task \
+                     + str_band + str_eid + '.pkl'
             elif task == 'compare_corrs_2groups1img':
                 out_name = task + \
                     '_' + str(cfg['event_id']) + '.hdf5'
@@ -748,16 +767,23 @@ class DataHost:
                     (task == 'erf_mc_pooled4img'):
                 out_name = 'pls_'+ task + '.mat'
             elif (task == 'erf_contrast_2group2img') or \
-                (task == 'erf_contrast_2group4img'):
-                str_eid = ''
+                (task == 'erf_contrast_2group4img') or \
+                (task == 'henv_std_contrast_4groups2img'):
+                str_eid = 'img'
                 for e in cfg['img_events']:
                     str_eid += '_' + str(e)
 
-                str_contrast = '_'
+                str_contrast = '_ctr_'
                 for c in cfg['contrasts']:
                     str_contrast+=str(c)
 
-                out_name = 'pls_'+ task + str_eid + str_contrast + '.mat'
+                if 'henv' in task:
+                    fmin, fmax = cfg['band']
+                    str_band = f'_{fmin:.0f}-{fmax:.0f}Hz_'
+                else:
+                    str_band = ''
+
+                out_name = 'pls_'+ task + str_band + str_eid + str_contrast + '.mat'
 
             if cfg['erf_power']:
                 if 'pls_' in out_name:

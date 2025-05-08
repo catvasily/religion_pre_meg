@@ -13,10 +13,13 @@
     #"to_run": ["input", "bem_model"],
     #"to_run": ["input", "src_rec"],
     #"to_run": ["input", "src_erf"],
+    #"to_run": ["input", "src_hilbert"],
     #"to_run": ["input", "plot_epochs"],
     #"to_run": ["input", "plot_waveforms"],
-    "to_run": ["input", "pls_analysis"],
+    #"to_run": ["input", "pls_analysis"],
     #"to_run": ["input", "plot_pls_inflated_brain"],
+    #"to_run": ["input", "plot_sm_fit_stats"],
+    "to_run": ["input", "plot_sm_fit_inflated_brain"],
     #----------------------------
 
     # A list of subjects to process. When null or empty - all subjects in the source folder
@@ -26,7 +29,8 @@
     # only specified dates will be processed.
     # The date is expected to be an integer of the form: YYMMDD
     #"subjects": null,
-    "subjects": ["3KHMXV","45TDGV","5TM3XZ","L846DP","SXBT5E"],
+    #"subjects": ["5TM3XZ"],
+    "subjects": ["45TDGV","5TM3XZ","3KHMXV","L846DP","SXBT5E"],
     # NOTE: subject "A388CU" excluded as it has only 149 ROIs present
     #"subjects": [
     #    "3KHMXV","5TM3XZ","9J2B9V","DTWDFD","extU2M7EY","HB57WT","KETDQV","NTDU8N","SXBT5E","WGB5JB",
@@ -38,11 +42,13 @@
     #    "GHLDMF","J2WZ7A","LNM8HK","QVDAP2","V9HDQM",   "YAY7MU","8X9HBY","BMP66Z","extMCJQKQ","3EA2HH",
     #    "RT2PGJ","V9V8F6","54RWW6","9BAJK3",   "CBFYGF","extRTPD9A","GVYFG2","K83Z5S","4YTMB6",
     #    "NR4D56","RZWJ7", "VHF5LJ","ZFQWV7","59N82C",   "9E5YN3","extTVFMU4","GZFAWR","85JXDK",
-    #    "NSX5BE","SBVR2Y","W87LJY","EPAZT3","K22ZS3",   "K8RBJJ","RT6BPM","RV2RJL","W7NRH9","YRGNZY",
-    #    "ZMGPTL"	
+    #    "NSX5BE","SBVR2Y","W87LJY","EPAZT3","K22ZS3",   "K8RBJJ","RT6BPM","RV2RJL","W7NRH9","ZMGPTL",
+    #    "52C4TG", "NTQYDM"	
 	#],	# "YYQQF8","KAGAJY" removed due to not having all 4 conditions present
+        # "YRGNZY" removed in all analyses run after Feb 6, 2025 - has retainers
+        # "52C4TG","NTQYDM" addded to analyses run after Feb 6, 2025
 
-    "N_ARRAY_JOBS": 1,          # Number of parralel jobs when running on CC cluster
+    "N_ARRAY_JOBS": 30,          # Number of parralel jobs when running on CC cluster
                                 # Set this to 1 if not running an array job.
                                 # This parameter is only used when run on DA cluster
     "out_root": "preprocessed", # top folder name for all pipeline output files
@@ -700,6 +706,28 @@
         "target_sample_rate": 100               # If not null, ERFs will be downsampled to this rate, in Hz
     },
 
+    # -------------------------
+    # 'src_hilbert' step settings
+    # -------------------------
+    "src_hilbert": {
+        "in_dir": "beamformed-classic",                # Step input folder relative to root/meg/processed/<pipeline_version>
+
+        #"out_dir": "beamformed-dual-state",                # Step output folder relative to root/meg/processed/<pipeline_version>
+        "out_dir": "beamformed-classic",        # 
+
+        "files": null,                          # A list of files to process; all .fif files if null
+        #"files": ["JYBZXP_task_run1_raw_filt_tsss_ica.fif"],
+        "bands": [[4.0,7.0],[8.0,13.0],         # Target frequency bands
+            [14.0,21.0],[21.0,28.0],[30.0,50.0]],
+        "events_for_hilbert": [111,121,131,141],    # event codes for which to run this step
+        "input_file_type" : "hdf5",             # extension of the input source files
+        "suffix": "_henv_",                     # Output files suffix. In: name.hdf5; out: name<suffix>.hdf5
+        "filter_order": 4,                      # BP Butterworth filter order; effective order will be twice as large
+        "taper_window": "hamming",              # taper type - see scipy.signal.get_window()
+        "power": true,                          # Flag to return power (squared amp) rather than amp                       
+        "target_sample_rate": 100               # If not null, ERFs will be downsampled to this rate, in Hz
+    },
+
     # ----------------------
     # 'plot_epochs' settings
     # ----------------------
@@ -756,13 +784,14 @@
     "plot_waveforms": {
         #"task": "compare_beams",   # Compare results of different beamformer types
         #"task": "evoked_std",      # Show evoked response and its STD
-        "task": "erf_std",          # Show ERF response and its STD
+        #"task": "erf_std",          # Show ERF response and its STD
+        "task": "henv_std",          # Show ERF response and its STD
         #"task": "compare_events",   # Evoked responses for different conditions
         #"in_dir": "beamformed-dual-state",    # Step input folder relative to root/meg/processed/<pipeline_version>
         "in_dir": "beamformed-classic",    # Step input folder relative to root/meg/processed/<pipeline_version>
         "out_dir": "plots/waveforms",  # Step output folder relative to root/meg/processed/<pipeline_version>
         #"files": ["L846DP-task_run1-ico-4-destrieux-ltc-evoked-141.hdf5"],
-        "files": ["L846DP-ico-4-destrieux-ltc_erf_141.hdf5"],
+        "files": ["5TM3XZ-ico-4-destrieux-ltc_henv_8.0-13.0Hz_121.hdf5"],
             
         # list if channels (ROIs) to plot; if null - all will be plotted
         "channels": ["G_and_S_occipital_inf-lh", "G_cuneus-lh", "G_oc-temp_lat-fusifor-lh",
@@ -773,7 +802,7 @@
             "S_parieto_occipital-lh"],
 
         "adjust_signs": true,   # Try to take into account possible sign flips of the waveforms
-                                # when comparing them. Ignored for "evoked_std" task
+                                # when comparing them. Ignored for "evoked_std", "erf_std", "henv_std" tasks
         "show_plots": true,
         "save_plots": true,
         "save_as_type": "png",       # saved plot image type
@@ -797,6 +826,7 @@
 
         "evoked_std": {
             "plot_type": "evoked_and_std",
+            "plot_zscore": false,           # Flag to plot mean/std instead of mean, std
             "plot_args": {
                 "x_limits": null,
                 "y_limits": null,
@@ -813,6 +843,7 @@
 
         "erf_std": {
             "plot_type": "erf_and_std",
+            "plot_zscore": false,           # Flag to plot mean/std instead of mean, std
             "plot_args": {
                 "x_limits": null,
                 "y_limits": null,
@@ -821,6 +852,23 @@
                 "xlabel": "Time",
                 "ylabel": "pseudo-Z",
                 "suptitle": "Evoked response field and its STD",
+                "ncols": 3,
+                "cmap": "tab10",
+                "dpi": 300
+            }
+        },
+
+        "henv_std": {
+            "plot_type": "henv_and_std",
+            "plot_zscore": true,           # Flag to plot mean/std instead of mean, std
+            "plot_args": {
+                "x_limits": null,
+                "y_limits": null,
+                "colors": null,
+                "cond_names": ["envelope", "std"], 
+                "xlabel": "Time",
+                "ylabel": "pseudo-Z",
+                "suptitle": "Envelopes and their STDs",
                 "ncols": 3,
                 "cmap": "tab10",
                 "dpi": 300
@@ -849,37 +897,58 @@
     "pls_analysis": {
         #"task": "erf_mc_2groups1img",           # Which PLS is being run: "erf_mc_<2 or 4>groups1img","erf_mc_1group4img"
                                                 # "erf_mc_2group4img", "erf_mc_pooled4img", "erf_contrast_2group2img",
-                                                # "erf_contrast_2group4img", "compare_corrs_2groups1img"
+                                                # "erf_contrast_2group4img", "compare_corrs_2groups1img", "henv_mc_4groups1img"
         #"task": "erf_mc_4groups1img",
         #"task": "erf_mc_1group4img",
         #"task": "erf_mc_2group4img",
         #"task": "erf_mc_pooled4img",
         #"task": "erf_contrast_2group2img",
         #"task": "erf_contrast_2group4img",
-        "task": "compare_corrs_2groups1img",
+        #"task": "compare_corrs_2groups1img",
+        #"task": "henv_std_mc_4groups1img",
+        #"task": "henv_std_contrast_4groups2img",
+        #"task": "henv_std_sm_4groups1img",
+        #"task": "henv_std_sm_santa1img",
+        #"task": "henv_std_sm_4groups2img",
+        "task": "henv_std_sm_santa2img",
 
-        "event_id": 141,                        # the event code to use for "erf_mc_<2 or 4>groups1img" task
+        "event_id": 131,                        # the event code to use for "erf_mc_<2 or 4>groups1img" task
         "group_id": 0,                          # a group (0 or 1) to be used for "erf_mc_1group4img" task
+        "band": [4.0,7.0],                      # frequency band for hilbert envelope tasks
         "img_events": [111,121,131,141],        # event codes to use for "erf_mc_1group4img" task
         #"img_events": [111,121],                # event codes to use for 'erf_contrast_2group2img' task
         #"contrasts": [1,-1,1,-1],              # contrasts - only used for contrast tasks
-        "contrasts": [1,-3,1,1,-1,3,-1,-1],
-        "erf_power": true,                      # Flag to use ERF power time course instead of ERF itself
+        "contrasts": [1,-1,-1,-1,-1,1,1,1],
+        "erf_power": false,                      # Flag to use ERF power time course instead of ERF itself
         "pls_interval": [1, 2],                 # time interval used as PLS features rel to the trigger, s
                                                 # (should usually be equal to 'src_rec' active interval)
+        "include_labels": null,                 # If not null, should be a list of ROI (label) names to include
+                                                # in PLS analyses
+        #"include_labels": [                     # 24 ROIs of DMN + SAL networks
+        #    "G_front_middle-lh","G_front_sup-lh","G_pariet_inf-Angular-lh","G_precentral-lh",
+        #    "G_precuneus-lh","G_temporal_middle-lh","G_and_S_cingul-Ant-lh","S_cingul-Marginalis-lh",
+        #    "G_and_S_cingul-Mid-Ant-lh","G_and_S_cingul-Mid-Post-lh","G_cingul-Post-dorsal-lh","S_circular_insula_ant-lh",
+        #    "G_front_middle-rh","G_front_sup-rh","G_pariet_inf-Angular-rh","G_precentral-rh",
+        #    "G_precuneus-rh","G_temporal_middle-rh","G_and_S_cingul-Ant-rh","S_cingul-Marginalis-rh",
+        #    "G_and_S_cingul-Mid-Ant-rh","G_and_S_cingul-Mid-Post-rh","G_cingul-Post-dorsal-rh","S_circular_insula_ant-rh"
+        #    ],
+
         #"return_precalculated_result": false,   # do not run PLS, use results from .mat file
         "return_precalculated_result": true,    # 
         "adjust_signs": false,                  # If true, try to align signs of evoked waveforms to that of
                                                 # the 1st subject of all being averaged for ERF
         "in_dir": "beamformed-classic",        
-        "out_dir": "pls-results/1-2s",        
+        #"out_dir": "pls-results/1-2s",        
+        "out_dir": "pls-results/1-2s/henv_std_sm", # QQQQ only on local machine        
         "files": null,                          # !!! files should always be null for this step !!!
         "input_file_type": "hdf5",              # extension of the input source files
         "create_subjects_out_folders": false,   # When false - prevent creating subjects subfolder
                                                 # structure in the output directory. Then ALL RESULTS
                                                 # WILL GO DIRECTLY TO THE out_dir !!!
-        "show_plots": true,                    # Flag to show interactive plots
+        "show_plots": false,                    # Flag to show interactive plots
         "sID_colname": "computer_code",
+        "age_colname": "age",
+        "gender_colname": "sex",
         "bias_colname": "bias",                 # SCZ/ASD group identifier column name in .csv file
         "bin_belief_colname": "God.number.scored.values.only",
                                                 # believer (1) - non-believer (0) column namd in .csv file
@@ -915,10 +984,10 @@
         "heatmap": {
             "subject4labels": "3KHMXV", # Subject ID to get the ROI names from; must have src-rec 
                                         # evoked ERFs on current host
-            "latent_var": 1,            #  Latent variable number for which to plot the Z-scores 
+            "latent_var": 0,            #  Latent variable number for which to plot the Z-scores 
             "t_range": null,            # Time range, s; if null - use 'pls_interval'
-            "color_min": -4,            # Z-score colorbar limits; if null - will be set automatically
-            "color_max": 4,
+            "color_min": -3,            # Z-score colorbar limits; if null - will be set automatically
+            "color_max": 3,
             "xlabel": "Time (seconds)",
             "ylabel": "ROIs",
             "cbar_label": "Z-score",
@@ -943,8 +1012,7 @@
         },
 
         "compare_corrs": {              # Settings for correlation distributions comparisons
-            #"num_boot": 1000,
-            "num_boot": 50,             # QQQ
+            "num_boot": 1000,
             "method": "pearson",        # Correlation method: "pearson" or "spearman"
             "mask_insignif_CI": true,   # In heatmap display, mask points where confidence interval contains 0 
             "hm_what": "hedges_g",      # what to plot as a heatmap: either "effect_sizes" or "hedges_g"
@@ -972,20 +1040,115 @@
                 "save_dependent": null,
                 "save_covariate": "None\n)"
             }
-        }
+        },
+           
+        # settings for running 30 jobs for 'henv_std_mc_4groups2img' 
+        "array_job_parms": [                                # Job number:
+            {"band": [4.0,7.0], "img_events": [111,121]},   # 0
+            {"band": [4.0,7.0], "img_events": [111,131]},   # 1
+            {"band": [4.0,7.0], "img_events": [111,141]},   # 2
+            {"band": [4.0,7.0], "img_events": [121,131]},   # 3
+            {"band": [4.0,7.0], "img_events": [121,141]},   # 4
+            {"band": [4.0,7.0], "img_events": [131,141]},   # 5
+            {"band": [8.0,13.0], "img_events": [111,121]},  # 6
+            {"band": [8.0,13.0], "img_events": [111,131]},  # 7
+            {"band": [8.0,13.0], "img_events": [111,141]},  # 8
+            {"band": [8.0,13.0], "img_events": [121,131]},  # 9
+            {"band": [8.0,13.0], "img_events": [121,141]},  # 10
+            {"band": [8.0,13.0], "img_events": [131,141]},  # 11
+            {"band": [14.0,21.0], "img_events": [111,121]}, # 12 
+            {"band": [14.0,21.0], "img_events": [111,131]}, # 13
+            {"band": [14.0,21.0], "img_events": [111,141]}, # 14
+            {"band": [14.0,21.0], "img_events": [121,131]}, # 15
+            {"band": [14.0,21.0], "img_events": [121,141]}, # 16
+            {"band": [14.0,21.0], "img_events": [131,141]}, # 17
+            {"band": [21.0,28.0], "img_events": [111,121]}, # 18
+            {"band": [21.0,28.0], "img_events": [111,131]}, # 19
+            {"band": [21.0,28.0], "img_events": [111,141]}, # 20
+            {"band": [21.0,28.0], "img_events": [121,131]}, # 21
+            {"band": [21.0,28.0], "img_events": [121,141]}, # 22
+            {"band": [21.0,28.0], "img_events": [131,141]}, # 23
+            {"band": [30.0,50.0], "img_events": [111,121]}, # 24
+            {"band": [30.0,50.0], "img_events": [111,131]}, # 25
+            {"band": [30.0,50.0], "img_events": [111,141]}, # 26
+            {"band": [30.0,50.0], "img_events": [121,131]}, # 27
+            {"band": [30.0,50.0], "img_events": [121,141]}, # 28
+            {"band": [30.0,50.0], "img_events": [131,141]}  # 29
+            ]
     },
 
-    # ----------------------
+    # --------------------------------------------------
     # 'plot_pls_inflated_brain' settings
     # ----------------------
     # IMPORTANT: PLS data to be plotted is
-    # determined by 'pls_analysis' key setting
-    # ----------------------------------------
+    # determined by relevant 'pls_analysis' key setting
+    # --------------------------------------------------
     "plot_pls_inflated_brain": {
         "time": 1.23,                   # Time value for z-scores. MUST BELONG TO pls_analysis/pls_interval
         "cbar_lims": [-4, 4],           # Color scale limits in user units
         "colorbar": false,              # Flag to display a colorbar
         "in_dir": "pls-results/1-2s",
+        "out_dir": "plots/pls/1-2s",    
+        "show_plots": true,             # Flag to show interactive plots
+        "atlas": "aparc.a2009s",        # Destrieux atlas name in FreeSurfer
+        "hemi": "both",                 # Valid values are: "both","lh","rh","split" 
+        "expand_values_to_roi": true,   # If true, the value assigne to label's COM is expanded
+                                        # to all label's vertices. SHOULD ALWAYS BE TRUE FOR NOW
+        "show_atlas": true,             # Flag to display parcellation
+        "colormap": "jet",             # Typically a string defining the palette name, or 'auto'.
+        "alpha_data": 1.0,              # (float): opacity of the data overlay on the cortex surface
+        "smoothing_steps": null,        # (int or 'Nearest' or null): smoothing when plotting data. An int
+                                        # value explicitly sets the number of vertices for smoothing.
+        "rois_to_mark": null,           # (list or null): if supplied, a list of names of ROIs 
+        "show_vertices": false,         # Flag to plot dots for vertices
+        "scale_factor": 0.2,            # Size of plotted dots relative to 1 cm
+        "color_dots": "white",          # color specification of plotted vertices
+        "alpha_cortex": 1.0,            # opacity of the cortex surface and the vertex dots
+        "resolution": 50,               # int value for the resolution of the vertex dots (spheres)
+        "views": [                      # Views to dispaly: ["view-name","hemi"]
+                ["frontal","lh"],
+                ["frontal","rh"],
+                ["par","lh"],
+                ["par","rh"],
+                ["axial","lh"],
+                ["ventral","lh"]
+            ],
+       "all_in_one": true,             # If true, all views will be put into one figure
+       "figsize":[[1800,300], 400]      # Figure sizes for all_in_one = true, false
+    },
+
+    "plot_sm_fit_stats": {          
+        "ylim": [-15, 15],
+        "alpha": 0.05,                  # Significance levels for OLS t-test results
+        "global_alpha": 0.01,           # 2-sided signif level for pooled results
+                                        # For example, if set to 0.05 the 0.025 and 0.975 quantiles
+                                        # will be calculated for lower and upper thresholds for a parameter
+        "stats_only": true,             # flag to calculate thresholds and signif (fit_parm,set,extremum) combinations
+        "bar_labels": [
+            "avg", "std","avg/std","n_sig"
+            ],
+        "png_name_suffix": "results_overview",  # The plot is saved to file <task>_<png_name_suffix>.png
+        "legend_fontsize": 8,
+        "n_plot_rows": 5,               # N of rows in a subplots grid
+        "figsize": [12, 9],             # fig size for 20 subplots case. For 30 - will be adjusted automatically
+        "dpi": 300,
+        "multiplier": 10
+    },
+
+    # --------------------------------------------------
+    # IMPORTANT: SM fitting data to be plotted is
+    # determined by relevant 'pls_analysis' key settings
+    # --------------------------------------------------
+    "plot_sm_fit_inflated_brain": {
+        "ijob": 11,                      # Index to the set to be plotted, identified by a list element
+                                        # in "pls_analysis"/"array_job_parms" 
+        "what": "group*rel",            # Which fit result to plot. One of: "group", "rel", "group*rel"
+        "cbar_lims": [-1.9, 1.60],           # Color scale limits in user units
+        "apply_thresholds": false,       # If true, values inside the clip interval will be set to the
+                                        # mean of color bar limits
+        "clip_interval": [-1.81, 1.57],     # Typically set to 2-sided quantile boundaries
+        "colorbar": false,              # Flag to display a colorbar
+        "in_dir": "pls-results/1-2s/henv_std_sm",
         "out_dir": "plots/pls/1-2s",    
         "show_plots": true,             # Flag to show interactive plots
         "atlas": "aparc.a2009s",        # Destrieux atlas name in FreeSurfer

@@ -69,6 +69,9 @@ Available steps:
 
     `'src_erf'`: generate low frequency source level ERFs
 
+    `'src_hilbert'`: for task runs, generate hilbert envelopes of source
+        time courses in canonical frequency bands
+
     `'plot_epochs'`: create overview plots of epoched data.
 
     `'plot_waveforms'`: grid plots of channel waveforms
@@ -76,6 +79,11 @@ Available steps:
     `'pls_analysis'`: run PLS on epoched data
 
     `'plot_pls_inflated_brain'`: display PLS z-scores on inflated brain surface
+
+    `'plot_sm_fit_stats'`: plot statistics of stat model fitting results distributions
+        over ROIs
+
+    `'plot_sm_fit_inflated_brain'`: display stat models fit results on inflated brain surface
 
 """
 
@@ -97,10 +105,13 @@ from do_ica import do_ica
 from bem_model import bem_model
 from src_rec import src_rec
 from src_erf import src_erf
+from src_hilbert import src_hilbert
 from plot_epochs import plot_epochs
 from plot_waveforms import plot_waveforms
 from pls_analysis import pls_analysis
 from plot_pls_inflated_brain import plot_pls_inflated_brain
+from plot_sm_fit_stats import plot_sm_fit_stats
+from plot_sm_fit_inflated_brain import plot_sm_fit_inflated_brain
 import setup_utils as su
 
 __file__ = path.realpath(__file__)    # expand potentially relative path to a full one
@@ -141,6 +152,8 @@ def input(ss):
 # --------------------------------------------------------
 #                    EPILOGUE                             
 # --------------------------------------------------------
+# TODO: restructure so that input step is simply a part
+# of the class constructor
 class _app:
     # ------
     # Cases: add your steps here in the form "my_step":my_step,
@@ -154,10 +167,13 @@ class _app:
         'bem_model': bem_model,
         'src_rec': src_rec,
         'src_erf': src_erf,
+        'src_hilbert': src_hilbert,
         'plot_epochs': plot_epochs,
         'plot_waveforms': plot_waveforms,
         'pls_analysis': pls_analysis,
         'plot_pls_inflated_brain': plot_pls_inflated_brain,
+        'plot_sm_fit_stats': plot_sm_fit_stats,
+        'plot_sm_fit_inflated_brain': plot_sm_fit_inflated_brain,
     }
 
     def __call__(self, name, *args, **kwargs):

@@ -27,7 +27,7 @@ def plot_waveforms(ss):
         config['show_plots'] = False
 
     # Supported plotting tasks
-    all_tasks = ('compare_beams', 'evoked_std', 'erf_std', 'compare_events')
+    all_tasks = ('compare_beams', 'evoked_std', 'erf_std', 'henv_std', 'compare_events')
 
     task = config['task']
 
@@ -44,8 +44,12 @@ def plot_waveforms(ss):
     files = su.files_to_process(ss, STEP)
     chlist = config['channels']
 
-    SR = ss.args['prefilter']['target_sample_rate'] if task != 'erf_std' \
-            else ss.args['src_erf']['target_sample_rate']
+    if task == 'erf_std':
+        SR = ss.args['src_erf']['target_sample_rate']
+    elif task == 'henv_std':
+        SR = ss.args['src_hilbert']['target_sample_rate']
+    else:
+        SR = ss.args['prefilter']['target_sample_rate']
 
     t0 = ss.args['src_rec']['epochs']['t_range'][0]
     lst_events = ss.args['src_rec']['events_for_evoked']
@@ -68,14 +72,34 @@ def plot_waveforms(ss):
             data_arrays = adjust_signs(data_arrays) if config['adjust_signs'] else data_arrays
             plot_array(data_arrays, x_values=x_values, fname=save_file, chnames=chlist,
                        show=config['show_plots'], **config[task]['plot_args'])
-        elif (task == 'evoked_std') or (task == 'erf_std'):
-            data_arrays.append(extract_channels(label_tcs[1], label_names, chlist))
+        elif task in ('evoked_std', 'erf_std', 'henv_std'):
+            suptitle = config[task]['plot_args']["suptitle"]
+            cond_names = config[task]['plot_args']["cond_names"]
+
+            if config[task]['plot_zscore']:
+                config[task]['plot_args']["suptitle"] = 'Z-scores'
+                config[task]['plot_args']["cond_names"] = ['zscores']
+
+                if save_file:
+                    tail = '.'+config['save_as_type']
+                    save_file = str(save_file).replace(tail, '_zscores' + tail)
+
+                data_arrays[0] /= extract_channels(label_tcs[1], label_names, chlist)
+            else:
+                data_arrays.append(extract_channels(label_tcs[1], label_names, chlist))
 
             # No need here - ignore 'adjust_signs' flag
             # data_arrays = adjust_signs(data_arrays) if config['adjust_signs'] else data_arrays
 
+            if task == 'henv_std':
+                config[task]['plot_args']["suptitle"] += f' for {in_file.name}'
+
             plot_array(data_arrays, x_values=x_values, fname=save_file, chnames=chlist,
                        show=config['show_plots'], **config[task]['plot_args'])
+
+            # Restore config for the next file processing (if any)
+            config[task]['plot_args']["suptitle"] = suptitle
+            config[task]['plot_args']["cond_names"] = cond_names 
         elif task == 'compare_events':
             data_arrays = collect_conditions_evoked_data(in_file, lst_events, label_names, chlist)
 
@@ -85,7 +109,7 @@ def plot_waveforms(ss):
                         show=config['show_plots'], **config[task]['plot_args'])
 
         if save_file:
-            print(f'Saved plot to {out_file}')
+            print(f'Saved plot to {save_file}')
 
     warnings.filterwarnings("default", category=RuntimeWarning)
     print(f'\n** {STEP} step completed **\n')                
