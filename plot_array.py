@@ -17,9 +17,9 @@ def plot_array(data_arrays, x_values=None, x_limits=None, y_limits=None, colors=
             `None`, sample indecies will be used
         x_limits(tuple): `(xmin, xmax)` the X-axis limits. If `None`, determined automatically.
         y_limits(tuple): `(ymin, ymax)` the Y-axis limits. If `None`, determined automatically.
-        colors(list): List of colors (one peri experiment). Any matplotlib color specification
+        colors(list): List of colors (one per experiment). Any matplotlib color specification
             is allowed. If `None`, automatically assigned in accordance with `cmap`.
-        chnames(list of str): channel names. If None, `ch N` will be used where `N`is a 
+        chnames(list of str): channel names. If `None`, `ch N` will be used where `N` is a 
             1-based channel number
         cond_names(list of str): names of conditions (experiments) that will be used as
             curves labels in the legend. If `None`, 'cond N' will be used where `N` is
@@ -34,6 +34,7 @@ def plot_array(data_arrays, x_values=None, x_limits=None, y_limits=None, colors=
         dpi(int): an image resolution to use when saving image
         fname(Path | str | None): full pathname of the file to save the image, If `None`
             the image will not be saved
+
     """
     n_experiments = len(data_arrays)  # Number of experiments
     nchan, nx = data_arrays[0].shape  # Assuming all data arrays have the same shape

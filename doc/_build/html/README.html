@@ -62,7 +62,30 @@
 <li class="toctree-l2"><a class="reference internal" href="#maxwell-filtering">3. Maxwell filtering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ica-eye-blinks-and-cardiac-artifacts-removal">4. ICA - eye blinks and cardiac artifacts removal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#construction-of-the-bem-head-model-and-source-spaces">5. Construction of the BEM head model and source spaces</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#source-reconstruction">6. Source reconstruction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#source-reconstruction">6. Source reconstruction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#additional-sub-step-calculating-evoked-responses">Additional sub-step: calculating evoked responses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-note-about-beamformer-types">A note about beamformer types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-note-regarding-calculating-the-rank-of-the-data">A note regarding calculating the rank of the data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#evoked-response-fields-erfs-calculation">7. Evoked response fields (ERFs) calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#constructing-hilbert-envelopes-for-task-runs-data">8. Constructing Hilbert envelopes for task runs data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-epoch-averaged-time-frequency-distributions-of-sensor-signals">9. Plot epoch-averaged time frequency distributions of sensor signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-a-grid-plot-of-waveforms-for-different-tasks-and-conditions">10. Create a grid plot of waveforms for different tasks and conditions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tasks-evoked-std-erf-std">Tasks “evoked_std”, “erf_std”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#task-compare-events">Task “compare_events”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#task-compare-beams">Task “compare_beams”</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pls-and-other-statistical-analyses-of-the-task-data">11. PLS and other statistical analyses of the task data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pls-tasks">PLS tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comparisons-of-distributions-of-correlations-between-brain-responses-and-religiosity-scores">Comparisons of distributions of correlations between brain responses and religiosity scores</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#statistical-models-fitting">Statistical models fitting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-pls-z-scores-on-an-inflated-brain-surface">12. Plot PLS z-scores on an inflated brain surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-an-overview-of-statistical-model-fitting-results-for-all-bands-and-images">13. Plot an overview of statistical model fitting results for all bands and images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-statistical-model-fits-results-for-all-rois-on-an-inflated-brain-surface">14. Plot statistical model fits results for all ROIs on an inflated brain surface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="code.html">Classes and functions for MEG data processing</a></li>
@@ -96,10 +119,11 @@
 <h1>MEG processing pipeline for the “Religion” project<a class="headerlink" href="#meg-processing-pipeline-for-the-religion-project" title="Link to this heading"></a></h1>
 <section id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
-<p>This Python code implememts processing pipeline of the MEG recordings collected
-for the <em>Religion</em> project. It starts with the raw data produced by Elekta
+<p>This Python code implements a processing pipeline for the MEG recordings collected
+for the <em>Religion</em> project. It starts with the raw data collected by Elekta
 (MEGIN) scanner, and produces source reconstructed signal time courses for a
-set of specific anatomical locations in the subject’s brain. The code uses the
+set of specific anatomical locations in the subject’s brain. Then a set of
+statistical analyses of the results is performed. The code uses the
 <em>MNE Python</em> MEG/EEG processing package.</p>
 <p>Note that for coregistration of each subject’s anatomy with the MEG system
 and for the brain sources reconstruction subject’s MRI data prepared by the
@@ -117,10 +141,10 @@ standard that allows comments (the original vanilla JSON has no provisions for
 comments). On the Python side, this requires importing <code class="docutils literal notranslate"><span class="pre">commentjson</span></code> module
 rather than the standard JSON processing module.</p>
 <p>Note that <strong>comments in the <code class="docutils literal notranslate"><span class="pre">pipeline_setup.json</span></code> are a crucial part of this
-porject’s documentation</strong>.</p>
+project’s documentation</strong>.</p>
 <p>Currently, the pipeline includes the following steps.</p>
 <ol class="arabic simple">
-<li><p><a class="reference internal" href="#the-input-step"><strong><code class="docutils literal notranslate"><span class="pre">'input'</span></code></strong></a> - readinging in all the input and
+<li><p><a class="reference internal" href="#the-input-step"><strong><code class="docutils literal notranslate"><span class="pre">'input'</span></code></strong></a> - loading all the input and
 configuration data.</p></li>
 <li><p><a class="reference internal" href="#the-pre-filtering-step"><strong><code class="docutils literal notranslate"><span class="pre">'prefilter'</span></code></strong></a> - filtering the raw data
 to the frequency band of interest, notching out power line frequencies,
@@ -135,8 +159,25 @@ MRI data.</p></li>
 <li><p><a class="reference internal" href="#source-reconstruction"><strong><code class="docutils literal notranslate"><span class="pre">'src_rec'</span></code></strong></a> - MRI/HEAD coordinates coregistration,
 inverse solution and source time courses reconstruction for specified regions
 of interest (ROIs) in the brain.</p></li>
+<li><p><a class="reference internal" href="#evoked-response-fields-erfs-calculation"><strong><code class="docutils literal notranslate"><span class="pre">'src_erf'</span></code></strong></a> - generating low frequency
+source level evoked response fields for each subject.</p></li>
+<li><p><a class="reference internal" href="#constructing-hilbert-envelopes-for-task-runs-data"><strong><code class="docutils literal notranslate"><span class="pre">'src_hilbert'</span></code></strong></a> - constructing
+Hilbert envelopes for the task data runs.</p></li>
+<li><p><a class="reference internal" href="#plot-epoch-averaged-time-frequency-distributions-of-sensor-signals"><strong><code class="docutils literal notranslate"><span class="pre">'plot_epochs'</span></code></strong></a> -
+creating overview time-frequency plots of the epoched data.</p></li>
+<li><p><a class="reference internal" href="#create-a-grid-plot-of-waveforms-for-different-tasks-and-conditions"><strong><code class="docutils literal notranslate"><span class="pre">'plot_waveforms'</span></code></strong></a> -
+creating a grid plot of waveforms for different tasks and conditions.</p></li>
+<li><p><a class="reference internal" href="#pls-and-other-statistical-analyses-of-the-task-data"><strong><code class="docutils literal notranslate"><span class="pre">'pls_analysis'</span></code></strong></a> -
+PLS and other statistical analyses of evoked and induced responses.</p></li>
+<li><p><a class="reference internal" href="#plot-pls-z-scores-on-an-inflated-brain-surface"><strong><code class="docutils literal notranslate"><span class="pre">'plot_pls_inflated_brain'</span></code></strong></a> -
+displaying PLS z-scores on an inflated brain surface.</p></li>
+<li><p><a class="reference internal" href="#plot-an-overview-of-statistical-model-fitting-results-for-all-bands-and-images"><strong><code class="docutils literal notranslate"><span class="pre">'plot_sm_fit_stats'</span></code></strong></a> -
+plotting an overview of statistical model fitting results for all frequency bands and
+images/image pairs.</p></li>
+<li><p><a class="reference internal" href="#plot-statistical-model-fits-results-for-all-rois-on-an-inflated-brain-surface"><strong><code class="docutils literal notranslate"><span class="pre">'plot_sm_fit_inflated_brain'</span></code></strong></a> -
+plotting statistical model fit results for all ROIs on an inflated brain surface.</p></li>
 </ol>
-<p>More details about the configuration file and processing steps are given below.</p>
+<p>More details about the configuration file and the processing steps are given below.</p>
 </section>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Link to this heading"></a></h2>
@@ -144,12 +185,12 @@ of interest (ROIs) in the brain.</p></li>
 <h3>Python environment<a class="headerlink" href="#python-environment" title="Link to this heading"></a></h3>
 <p>This code runs under Python 3.10+, using MNE Python version 1.7+. To establish
 a virtual environment, one needs to run the commands below.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Steps to be done just once</span>
-<span class="c1"># --------------------------</span>
-<span class="c1"># On Digital Alliance cluster only - to load Python</span>
-    <span class="n">module</span> <span class="n">load</span> <span class="n">StdEnv</span><span class="o">/</span><span class="mi">2023</span>         <span class="c1"># To get Python &gt; 3.10</span>
-	<span class="n">module</span> <span class="n">load</span> <span class="n">python</span>              <span class="c1"># Loads version 3.11.5</span>
-	<span class="n">module</span> <span class="n">load</span> <span class="n">scipy</span><span class="o">-</span><span class="n">stack</span>	        <span class="c1"># ?? Version not known</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Steps</span> <span class="n">to</span> <span class="n">be</span> <span class="n">done</span> <span class="n">just</span> <span class="n">once</span>
+<span class="o">--------------------------</span>
+<span class="c1"># On Cedar only - to activate Python environment</span>
+    <span class="n">module</span> <span class="n">load</span> <span class="n">StdEnv</span><span class="o">/</span><span class="mi">2023</span>
+    <span class="n">module</span> <span class="n">load</span> <span class="n">python</span><span class="o">/</span><span class="mf">3.11.5</span>
+    <span class="n">module</span> <span class="n">load</span> <span class="n">scipy</span><span class="o">-</span><span class="n">stack</span><span class="o">/</span><span class="mi">2023</span><span class="n">b</span>
 
 <span class="c1"># Do this at the location where the virtual environment will</span>
 <span class="c1"># actually be stored. It does not need to be your code folder.</span>
@@ -171,13 +212,6 @@ a virtual environment, one needs to run the commands below.</p>
 
 <span class="c1"># Test this minimal MNE Python installation:</span>
 <span class="n">python</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;import mne; mne.sys_info()&quot;</span>
-
-<span class="c1"># Packages that can potentially be installed:</span>
-<span class="c1"># Scientific:</span>
-<span class="c1">#   sklearn, numba, nibabel, nilearn, dipy, openmeeg, cupy, pandas</span>
-<span class="c1"># Visualization:</span>
-<span class="c1">#   pyvista, pyvistaqt, vtk, ipympl, ipywidgets, trame_client, trame_server,</span>
-<span class="c1">#   trame_vtk, trame_vuetify</span>
 
 <span class="n">pip3</span> <span class="n">install</span> <span class="n">commentjson</span>    <span class="c1"># To work with JSON files with comments</span>
 <span class="n">pip3</span> <span class="n">install</span> <span class="n">joblib</span>         <span class="c1"># To use parallel jobs where possible</span>
@@ -203,6 +237,12 @@ a virtual environment, one needs to run the commands below.</p>
 <span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">myst_parser</span>
 <span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">sphinx_rtd_theme</span>
 
+<span class="c1"># For using graphics with dataframes (Bonni&#39;s scripts)</span>
+<span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">seaborn</span>
+
+<span class="c1"># Statsmodels package</span>
+<span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">index</span> <span class="n">statsmodels</span>   <span class="c1"># use no-index option only on CC cluster</span>
+
 <span class="n">deactivate</span>
 </pre></div>
 </div>
@@ -210,8 +250,8 @@ a virtual environment, one needs to run the commands below.</p>
 <section id="data-files-organization">
 <h3>Data files organization<a class="headerlink" href="#data-files-organization" title="Link to this heading"></a></h3>
 <p>The following file structure is assumed for this project.</p>
-<p>All data resides in a single project folder, referred to as the “project root”
-further on.</p>
+<p>All data with exception of MRI data resides in a single project folder, referred
+to as the “project root” further on.</p>
 <p>All MEG data (both the original and the processed) resides in the folder defined
 by the <code class="docutils literal notranslate"><span class="pre">meg</span></code> key in the <a class="reference internal" href="#json-configuration-file">JSON configuration file</a>
 (currently “meg”) under the project root.</p>
@@ -292,10 +332,10 @@ described above. If not <code class="docutils literal notranslate"><span class="
 that need be processed. All other input files will be skipped.</p></li>
 </ul>
 <p>The <strong><code class="docutils literal notranslate"><span class="pre">suffix</span></code></strong> key defines a suffix that will be appended to the name part of
-the input <code class="docutils literal notranslate"><span class="pre">.fif</span></code> file to construct the name of the output <code class="docutils literal notranslate"><span class="pre">.fif</span></code> file. For example, with
-the current settings if the input file for the <code class="docutils literal notranslate"><span class="pre">ica</span></code> step is <code class="docutils literal notranslate"><span class="pre">XXXX.fif</span></code>, the output
-file will be <code class="docutils literal notranslate"><span class="pre">XXXX_ica.fif</span></code>. The suffix is not used for the source reconstruction
-step.</p>
+the input <code class="docutils literal notranslate"><span class="pre">.fif</span></code> (or other) file to construct the name of the output <code class="docutils literal notranslate"><span class="pre">.fif</span></code>,
+<code class="docutils literal notranslate"><span class="pre">.hdf5</span></code>, etc. file. For example, with the current settings if the input file
+for the <code class="docutils literal notranslate"><span class="pre">ica</span></code> step is <code class="docutils literal notranslate"><span class="pre">XXXX.fif</span></code>, the output file will be <code class="docutils literal notranslate"><span class="pre">XXXX_ica.fif</span></code>.
+The suffix is not used for the source reconstruction step.</p>
 <p>Most important step-specific keys are described below in corresponding sections.
 Please refer to the comments inside the <code class="docutils literal notranslate"><span class="pre">pipeline_setup.json</span></code> file for further
 details.</p>
@@ -315,8 +355,8 @@ corresponding <code class="docutils literal notranslate"><span class="pre">.sbat
 </div>
 <p>In this case, all subjects to be processed will be distributed between
 parallel SLURM jobs as evenly as possible. Please make sure that the number
-of jobs in the array defined in the <code class="docutils literal notranslate"><span class="pre">.sbatch</span></code> script matches the <code class="docutils literal notranslate"><span class="pre">N_ARRAY_JOBS</span></code>
-parameter in the <a class="reference internal" href="#json-configuration-file">JSON configuration file</a>.</p>
+of jobs in the array determined in the <code class="docutils literal notranslate"><span class="pre">.sbatch</span></code> script properly matches the
+<code class="docutils literal notranslate"><span class="pre">N_ARRAY_JOBS</span></code> parameter in the <a class="reference internal" href="#json-configuration-file">JSON configuration file</a>.</p>
 </section>
 <section id="the-source-code-documentation">
 <h3>The source code documentation<a class="headerlink" href="#the-source-code-documentation" title="Link to this heading"></a></h3>
@@ -463,8 +503,364 @@ beamformer weights and the global pseudo-Z value for the corresponding
 sensor data. Please refer to <code class="docutils literal notranslate"><span class="pre">write_roi_time_courses(),</span> <span class="pre">read_roi_time_courses()</span></code>
 methods documentation for more details regarding the source time course HDF5
 files.</p>
+<section id="additional-sub-step-calculating-evoked-responses">
+<h3>Additional sub-step: calculating evoked responses<a class="headerlink" href="#additional-sub-step-calculating-evoked-responses" title="Link to this heading"></a></h3>
+<p>When source reconstruction for task runs is completed, one can perform evoked (or phase-locked)
+signal extraction as an additional step. To do this, it is necessary to re-run <code class="docutils literal notranslate"><span class="pre">src_rec</span></code> step
+with <code class="docutils literal notranslate"><span class="pre">&quot;do_evoked&quot;</span></code> key in the JSON configuration set to <code class="docutils literal notranslate"><span class="pre">true</span></code>. As a result, for each event ID
+listed under the <code class="docutils literal notranslate"><span class="pre">&quot;events_for_evoked&quot;</span></code> key in the configuration file, the averages and STDs of all
+epochs corresponding to this ID will be calculated, and the result will be saved in .HDF5 file.
+This will be repeated separately for each task of every subject to be processed. Assuming that
+there are four event IDs and three task runs per subject, twelve new .HDF5 files will be created
+in the subject’s beamformer output folder, with the following name template:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">subject</span><span class="o">-</span><span class="n">ID</span><span class="o">&gt;-</span><span class="n">task_run</span><span class="o">&lt;</span><span class="n">N</span><span class="o">&gt;-</span><span class="n">ico</span><span class="o">-</span><span class="mi">4</span><span class="o">-</span><span class="n">destrieux</span><span class="o">-</span><span class="n">ltc</span><span class="o">-</span><span class="n">evoked</span><span class="o">-&lt;</span><span class="n">event</span><span class="o">-</span><span class="n">ID</span><span class="o">&gt;.</span><span class="n">hdf5</span>
+</pre></div>
+</div>
+</section>
+<section id="a-note-about-beamformer-types">
+<h3>A note about beamformer types<a class="headerlink" href="#a-note-about-beamformer-types" title="Link to this heading"></a></h3>
+<p>Configuration key <code class="docutils literal notranslate"><span class="pre">&quot;use_dual_state_beam&quot;</span></code> is typically set to <code class="docutils literal notranslate"><span class="pre">false</span></code>, in which case a classic
+scalar minimum variance beamformer reconstruction is performed. When set to <code class="docutils literal notranslate"><span class="pre">true</span></code>, a novel dual-state
+beamformer is used, which may yield better results in certain situations. Please note that the type of
+beamformer applied is not reflected in either the names or the contents of the output .hdf5 files. To
+avoid overwriting existing results when using both beamformers in parallel, it is recommended to select
+a dedicated output folder for each type by appropriately setting the value of the <code class="docutils literal notranslate"><span class="pre">&quot;out_dir&quot;</span></code> key.</p>
+</section>
+<section id="a-note-regarding-calculating-the-rank-of-the-data">
+<h3>A note regarding calculating the rank of the data<a class="headerlink" href="#a-note-regarding-calculating-the-rank-of-the-data" title="Link to this heading"></a></h3>
+<p>The MEG sensor data used in the beamformer analysis is highly degenerate. It means that the sensor time
+courses are linearly dependent. The loss of degrees of freedom in data is a result of the preprocessing
+steps such as Maxwell filtering, ICA, and out-projections, aimed at reducing the noise and artifacts in
+the data. The price paid is that the original rank of the data covariance matrix, which is around 300,
+is typically reduced to a number slightly above 60.</p>
+<p>If the rank is overestimated, the beamformer reconstruction may produce strong spurious sources. To avoid
+this one needs to choose the rank wisely. This is done by plotting the spectrum of eigenvalues
+(EVs) of the MEG data covariance matrix in descending order in logarithmic scale, identifying a
+sharp drop in their magnitudes and keeping only components with EVs to the left of that drop.
+The ratio of the smallest kept EV to the maximum EV is called a condition number <code class="docutils literal notranslate"><span class="pre">rcond</span></code>. Thus found
+<code class="docutils literal notranslate"><span class="pre">rcond</span></code> value is then set in this step’s JSON configuration, under the key <code class="docutils literal notranslate"><span class="pre">&quot;beam&quot;</span></code>, sub-key <code class="docutils literal notranslate"><span class="pre">&quot;rcond&quot;</span></code>.
+For the MEG data in question <code class="docutils literal notranslate"><span class="pre">rcond</span> <span class="pre">=</span> <span class="pre">1e-4</span></code> was found safe to use for most subjects.</p>
 <p>The source code for this step is found in file
 <a class="reference internal" href="#doc/_build/html/code.html#module-src_rec"><span class="xref myst">src_rec.py</span></a>.</p>
+</section>
+</section>
+<section id="evoked-response-fields-erfs-calculation">
+<h2>7. Evoked response fields (ERFs) calculation<a class="headerlink" href="#evoked-response-fields-erfs-calculation" title="Link to this heading"></a></h2>
+<p>At this step low frequency source level ERFs are generated. For each subject the following operations
+are performed:</p>
+<ol class="arabic simple">
+<li><p>Evoked responses from all task runs are averaged separately for each event ID
+(image type)</p></li>
+<li><p>The averaged data is low pass filtered</p></li>
+<li><p>The filtered data is downsampled to a target ERF sample rate</p></li>
+</ol>
+<p>To deal with the sign uncertainty of the beamformer reconstructed time courses, the signs of evoked
+responses of all task runs for a given subject were aligned. This was achieved by calculating
+a correlation of the evoked response for each run with that of the 1st run, on a time interval
+specified by key <code class="docutils literal notranslate"><span class="pre">&quot;sign_adjust_interval&quot;</span></code> of this step configuration. If the correlation turned
+out negative, the sign of the given evoked response was flipped before adding to the average.</p>
+<p>The low pass filter frequency and the target sample rate are specified by configuration keys <code class="docutils literal notranslate"><span class="pre">&quot;fmax&quot;</span></code>
+and <code class="docutils literal notranslate"><span class="pre">&quot;target_sample_rate&quot;</span></code>, respectively.</p>
+<p>Resulting ERF signals are stored as .HDF5 files in the subject’s beamformer output folder, with the
+following name template:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">subject</span><span class="o">-</span><span class="n">ID</span><span class="o">&gt;-</span><span class="n">ico</span><span class="o">-</span><span class="mi">4</span><span class="o">-</span><span class="n">destrieux</span><span class="o">-</span><span class="n">ltc</span><span class="o">-</span><span class="n">erf</span><span class="o">-&lt;</span><span class="n">event</span><span class="o">-</span><span class="n">ID</span><span class="o">&gt;.</span><span class="n">hdf5</span>
+</pre></div>
+</div>
+<p>The source code for this step is found in file
+<a class="reference internal" href="#doc/_build/html/code.html#module-src_erf"><span class="xref myst">src_erf.py</span></a>.</p>
+</section>
+<section id="constructing-hilbert-envelopes-for-task-runs-data">
+<h2>8. Constructing Hilbert envelopes for task runs data<a class="headerlink" href="#constructing-hilbert-envelopes-for-task-runs-data" title="Link to this heading"></a></h2>
+<p>ERF fields calculated at the previous step represent broad band phase-locked brain responses
+to the stimuli. At the current step so called induced, or “time-locked” responses to the stimuli are
+estimated as described below. Parameters for this step reside under key <code class="docutils literal notranslate"><span class="pre">&quot;src_hilbert&quot;</span></code> in the
+JSON configuration file.</p>
+<p>Source-reconstructed task runs for each subject are first band-pass filtered to canonical
+frequency bands (key <code class="docutils literal notranslate"><span class="pre">&quot;bands&quot;</span></code>). The events to process are listed under the key
+<code class="docutils literal notranslate"><span class="pre">&quot;events_for_hilbert&quot;</span></code>. Then for each frequency band the analytic signal is constructed and a
+time course of either its squared amplitude (key <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code> set to <code class="docutils literal notranslate"><span class="pre">true</span></code>) or of the
+amplitude itself is found. The time course is then downsampled to the sampling
+rate specified by the key <code class="docutils literal notranslate"><span class="pre">&quot;target_sample_rate&quot;</span></code>, and saved to the .hdf5 file in the
+subject’s folder.</p>
+<p>NOTE: Current version of the code <strong>forces the power (i.e. squared amplitude) envelope</strong> irrespective
+to the <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code> key setting, and the output .hdf5 file name looks like this:
+<code class="docutils literal notranslate"><span class="pre">45TDGV-ico-4-destrieux-ltc_henv_8.0-13.0Hz_141.hdf5</span></code>. This is done because additional ‘pwr’
+suffix was not included in the output .hdf5 name to properly reflect this key setting at the
+time of mass data processing. However all changes required for adding the suffix are already
+implemented and can be turned on in future runs - see “QQQ” comments in the code.</p>
+<p>The source code for this step is found in file
+<a class="reference internal" href="#doc/_build/html/code.html#module-src_hilbert"><span class="xref myst">src_hilbert.py</span></a>.</p>
+</section>
+<section id="plot-epoch-averaged-time-frequency-distributions-of-sensor-signals">
+<h2>9. Plot epoch-averaged time frequency distributions of sensor signals<a class="headerlink" href="#plot-epoch-averaged-time-frequency-distributions-of-sensor-signals" title="Link to this heading"></a></h2>
+<p>An overview topographic plot of time-frequency power spectra of sensor signals for a given
+task run of a given subject is created.</p>
+<p>All input parameters for this step are specified under key <code class="docutils literal notranslate"><span class="pre">&quot;plot_epochs&quot;</span></code> of the JSON configuration
+file. Please note that the top-level subject list (key <code class="docutils literal notranslate"><span class="pre">&quot;subjects&quot;</span></code>) should contain exactly one
+subject (for example, <code class="docutils literal notranslate"><span class="pre">[&quot;45TDGV&quot;]</span></code>), and <code class="docutils literal notranslate"><span class="pre">&quot;plot_epochs&quot;/&quot;files&quot;</span></code> key should list just a
+single task run data file for this same subject (i.e. <code class="docutils literal notranslate"><span class="pre">[&quot;45TDGV_task_run1_raw_filt_tsss_ica.fif&quot;]</span></code>).
+The created plot is saved as .PNG image inside a folder specifed by the <code class="docutils literal notranslate"><span class="pre">&quot;plot_epochs&quot;/&quot;out_dir&quot;</span></code>
+key.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;picks&quot;</span></code> key specifies a set of channels to plot, for example <code class="docutils literal notranslate"><span class="pre">&quot;meg&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mag&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;grad&quot;</span></code>, etc.
+Other parameters are self-explanatory or documented inside the JSON configuration file.</p>
+<p>The source code for this step is found in file
+<a class="reference internal" href="#doc/_build/html/code.html#module-plot_epochs"><span class="xref myst">plot_epochs.py</span></a>.</p>
+</section>
+<section id="create-a-grid-plot-of-waveforms-for-different-tasks-and-conditions">
+<h2>10. Create a grid plot of waveforms for different tasks and conditions<a class="headerlink" href="#create-a-grid-plot-of-waveforms-for-different-tasks-and-conditions" title="Link to this heading"></a></h2>
+<p>This steps generates several types of grid plots of the reconstructed signal time courses.
+Similarly to the previous step, the top-level subject list (key <code class="docutils literal notranslate"><span class="pre">&quot;subjects&quot;</span></code>) should contain exactly
+one subject (for example, <code class="docutils literal notranslate"><span class="pre">[&quot;L846DP&quot;]</span></code>), and the <code class="docutils literal notranslate"><span class="pre">&quot;files&quot;</span></code> sub-key for this step should list
+just a single evoked or ERF source data file for the same subject, for example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="s2">&quot;plot_waveforms&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="o">...</span>
+        <span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;L846DP-ico-4-destrieux-ltc_erf_141.hdf5&quot;</span><span class="p">],</span>
+        <span class="o">...</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>For all types of plots the <code class="docutils literal notranslate"><span class="pre">&quot;channels&quot;</span></code> sub-key specifies a list of the names ROIs to be shown.
+The <code class="docutils literal notranslate"><span class="pre">&quot;adjust_signs&quot;</span></code> sub-key defines whether an attempt to align signs of the curves shown
+within a single sub-plot is attempted. If requested, the sign alignment is done by calculating
+signs of correlations between the time curves, the same way as described for the
+<a class="reference internal" href="#evoked-response-fields-erfs-calculation">ERF step</a>.</p>
+<p>The type of the grid plot is determined by the value of the <code class="docutils literal notranslate"><span class="pre">&quot;task&quot;</span></code> sub-key, as follows.</p>
+<section id="tasks-evoked-std-erf-std">
+<h3>Tasks “evoked_std”, “erf_std”<a class="headerlink" href="#tasks-evoked-std-erf-std" title="Link to this heading"></a></h3>
+<p>For these values of the <code class="docutils literal notranslate"><span class="pre">&quot;task&quot;</span></code> key plots of evoked or ERF responses from specified locations
+together with their standard deviations will be generated. Additional plotting parameters (colors,
+labels, titles) can be set under the sub-keys <code class="docutils literal notranslate"><span class="pre">&quot;evoked_std&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;erf_std&quot;</span></code> of the main key of
+this step <code class="docutils literal notranslate"><span class="pre">&quot;plot_waveforms&quot;</span></code>. Mind to specify the correct file (<code class="docutils literal notranslate"><span class="pre">...evoked...hdf5</span></code> or <code class="docutils literal notranslate"><span class="pre">...erf...hdf5</span></code>)
+with the <code class="docutils literal notranslate"><span class="pre">&quot;files&quot;</span></code> key.</p>
+</section>
+<section id="task-compare-events">
+<h3>Task “compare_events”<a class="headerlink" href="#task-compare-events" title="Link to this heading"></a></h3>
+<p>In this case plots of several evoked responses for given locations are constructed. Corresponding
+events are listed under the key <code class="docutils literal notranslate"><span class="pre">&quot;src_rec&quot;</span></code>, sub-key <code class="docutils literal notranslate"><span class="pre">&quot;events_for_evoked&quot;</span></code> of the source reconstruction
+step. The <code class="docutils literal notranslate"><span class="pre">&quot;files&quot;</span></code> key in this case should list a <em>single</em> .hdf5 file with an evoked response corresponding
+to any of the events; data for all other events will be found automatically. Additional plotting
+parameters can be specified under the sub-key <code class="docutils literal notranslate"><span class="pre">&quot;compare_events&quot;</span></code>.</p>
+</section>
+<section id="task-compare-beams">
+<h3>Task “compare_beams”<a class="headerlink" href="#task-compare-beams" title="Link to this heading"></a></h3>
+<p>For this task, the plots will display <em>evoked</em> data from two versions of a single .hdf5 file listed
+under the <code class="docutils literal notranslate"><span class="pre">&quot;files&quot;</span></code>key. The 1st version of file will be taken from folder given by the
+<code class="docutils literal notranslate"><span class="pre">&quot;in_dir&quot;</span></code> sub-key of this step. The 2nd version will be taken from the folder given by
+<code class="docutils literal notranslate"><span class="pre">&quot;compare_beams&quot;/&quot;compare_dir&quot;</span></code> sub-key. Additional plotting parameters can be specified under
+<code class="docutils literal notranslate"><span class="pre">&quot;compare_beams&quot;/&quot;plot_args&quot;</span></code> sub-key.</p>
+</section>
+</section>
+<section id="pls-and-other-statistical-analyses-of-the-task-data">
+<h2>11. PLS and other statistical analyses of the task data<a class="headerlink" href="#pls-and-other-statistical-analyses-of-the-task-data" title="Link to this heading"></a></h2>
+<p>At this step various statistical analyses of brain response to presented image stimuli are performed.
+The majority of them represent various PLS tests applied to the evoked (ERF) data. Some PLS tests
+are applied to Hilbert envelopes of the induced responses in canonical frequency bands. Several
+non-PLS statistical tasks can also be done in this step. In any case, a concrete task is specified
+by the value of the sub-key <code class="docutils literal notranslate"><span class="pre">&quot;task&quot;</span></code> under the main key <code class="docutils literal notranslate"><span class="pre">&quot;pls_analysis&quot;</span></code> in the JSON configuration file.</p>
+<section id="pls-tasks">
+<h3>PLS tasks<a class="headerlink" href="#pls-tasks" title="Link to this heading"></a></h3>
+<p>The PLS part of this step relies on matlab PLS package to do most of the work. Therefore one
+needs matlab to be installed in the system for this code to run, together with the matlab PLS analysis
+source package.</p>
+<p>Typically, the PLS processing itself is performed remotely on the Digital Alliance Cedar cluster.
+The <code class="docutils literal notranslate"><span class="pre">.mat</span></code> file with results is then downloaded to the local machine, where heatmaps and .hdf5
+files are constructed.</p>
+<p>Most of the keys for this step in the JSON files are self-explanatory or described in the comments.
+Only some important ones are mentioned here.</p>
+<p>The time interval in seconds for the MEG data to be included in PLS is set by the sub-key
+<code class="docutils literal notranslate"><span class="pre">&quot;pls_interval&quot;</span></code>.</p>
+<p>When running PLS on MEG ERF data directly, the value of the sub-key <code class="docutils literal notranslate"><span class="pre">&quot;erf_power&quot;</span></code> should be set to
+<code class="docutils literal notranslate"><span class="pre">false</span></code>. Alternatively, to do PLS with ERF powers one needs to set the value of this key to
+<code class="docutils literal notranslate"><span class="pre">true</span></code>.</p>
+<p>When one wants to actually run the PLS calculations (i.e. on Cedar), the value of a sub-key
+<code class="docutils literal notranslate"><span class="pre">&quot;return_precalculated_result&quot;</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">false</span></code>. When processing already available <code class="docutils literal notranslate"><span class="pre">.mat</span></code>
+file with results (i.e. downloaded from Cedar to the local machine), the value of this sub-key
+should be set to <code class="docutils literal notranslate"><span class="pre">true</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;files&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;create_subjects_out_folders&quot;</span></code> sub-keys are present for consistency and should
+be set to <code class="docutils literal notranslate"><span class="pre">null</span></code> and <code class="docutils literal notranslate"><span class="pre">false</span></code>, respectively.</p>
+<p>All information that PLS needs about the subjects, their affiliations with SCZ or ASD groups, and their
+religiosity data is stored in <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file. For every data host (i.e. Cedar or a local
+machine) a full pathname to this file should be specified under key <code class="docutils literal notranslate"><span class="pre">&quot;hosts&quot;/&quot;&lt;host&gt;&quot;</span></code>, sub-key
+<code class="docutils literal notranslate"><span class="pre">&quot;subjects_info_csv&quot;</span></code> in the JSON configuration. The <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file is expected to have a single
+row header, and specific names for columns with various data. In particular, the column with
+subject IDs should have a name given by the “pls_analysis”/”sID_colname” sub-key. Sub-key <code class="docutils literal notranslate"><span class="pre">&quot;bias_colname&quot;</span></code>
+sets the name of the bias column. Negative values in this column correspond to SCZ group, which
+is always designated as <code class="docutils literal notranslate"><span class="pre">group</span> <span class="pre">0</span></code> in all analyses. Positive values correspond to the ASD group,
+which is <code class="docutils literal notranslate"><span class="pre">group</span> <span class="pre">1</span></code>. Sub-key <code class="docutils literal notranslate"><span class="pre">&quot;bin_belief_colname&quot;</span></code> sets the name for the binary “believer/non-believer”
+score column. Sub-key <code class="docutils literal notranslate"><span class="pre">&quot;santa_clara_colname&quot;</span></code> specifies the name of a column with Santa-Clara
+scores.</p>
+<p>As mentioned above, specific type of statistical analysis done is determined by the
+<code class="docutils literal notranslate"><span class="pre">&quot;task&quot;</span></code> sub-key. The descriptions of varios PLS tasks are presented below.</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;erf_mc_2groups1img&quot;</span></code></strong>. Mean-centered PLS comparing responses of 2 groups to a single image is run.
+Only a single contrast (latent variable) [0.75,-0.75] exists in this case. The ID of the image in
+question is set by the value of the <code class="docutils literal notranslate"><span class="pre">&quot;event_id&quot;</span></code> sub-key.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;erf_mc_4groups1img&quot;</span></code></strong>. Same as the previous task, but in this case 4 sub-groups are compared, which
+are formed by sub-dividing each main group into believers and non-believers. Thus each sub-group is
+specified by a pair (main group number, binary believer score). Mapping of those pairs
+to sub-group numbers is given under the sub-key <code class="docutils literal notranslate"><span class="pre">&quot;bias_belief_groups&quot;</span></code>. For this task, three independent
+contrasts (latent variables) found by PLS will exist.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;erf_mc_1group4img&quot;</span></code>,<code class="docutils literal notranslate"><span class="pre">&quot;erf_mc_2group4img&quot;</span></code>,<code class="docutils literal notranslate"><span class="pre">&quot;erf_mc_pooled4img&quot;</span></code></strong>. Mean-centered PLS with
+four conditions (images). Condition codes are listed under the key <code class="docutils literal notranslate"><span class="pre">&quot;img_events&quot;</span></code>. For these tasks,
+the images are presented to a single group, or to both group 1 and group 2, or to a single pooled
+group of all subjects respectively. For the <code class="docutils literal notranslate"><span class="pre">&quot;erf_mc_1group4img&quot;</span></code> task the group in question is
+specified by the <code class="docutils literal notranslate"><span class="pre">&quot;group_id&quot;</span></code> key.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;erf_contrast_2group2img&quot;</span></code>,<code class="docutils literal notranslate"><span class="pre">&quot;erf_contrast_2group4img&quot;</span></code></strong>. The <em>contrast</em> (non-rotated) PLS
+comparing responses of 2 groups to a pair of images, or to all four images, respectively. In this
+case the contrast is specified manually by listing the weights for each (group, condition) combination
+under the key <code class="docutils literal notranslate"><span class="pre">&quot;contrasts&quot;</span></code>. The weights for the group 0 are listed first, then those for group 1.
+The number of weights will be 4 for the first of these tasks (i.e. <code class="docutils literal notranslate"><span class="pre">&quot;[1,-1,1,-1]&quot;</span></code>),
+or 8 for the second one (i.e. <code class="docutils literal notranslate"><span class="pre">&quot;[1,-3,1,1,-1,3,-1,-1]&quot;</span></code>). In all cases the image events are
+listed by the key <code class="docutils literal notranslate"><span class="pre">&quot;img_events&quot;</span></code>.</p></li>
+</ul>
+<p>The following tasks specify PLS analyses run on Hilbert envelopes calculated for standard frequency
+bands, rather than on ERF time courses.</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">henv_mc_4groups1img</span></code></strong>. Mean-centered PLS for 4 sub-groups and 1 image for Hilbert envelopes.
+The subgroups are: SCZ-believers, ASD-believers, SCZ-nonbelievers, ASD-nonbelievers.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">henv_std_mc_4groups1img</span></code></strong>. Mean-centered PLS for 4 sub-groups and 1 image for time courses of
+STDs of Hilbert envelopes rather than envelopes themselves. Same sub-groups as above.</p></li>
+</ul>
+<p>For all PLS tasks the number of random permutations of subjects for P-values estimates is specified
+by the <code class="docutils literal notranslate"><span class="pre">&quot;num_perm&quot;</span></code> sub-keys of the keys <code class="docutils literal notranslate"><span class="pre">&quot;pls_options_mc&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;pls_options_contrast&quot;</span></code>, depending
+on the PLS type. Similarly, the number of bootstrap resamplings for the Z-scores
+estimates is given by the <code class="docutils literal notranslate"><span class="pre">&quot;num_boot&quot;</span></code> sub-keys.</p>
+<p>When ran locally, each of the above tasks produce a composite figure showing PLS results for a specified
+contrast/latent variable. The variable number is zero-based and is set by the <code class="docutils literal notranslate"><span class="pre">&quot;heatmap&quot;/&quot;latent_var&quot;</span></code>
+sub-key. The figure includes a bar plot for the contrast in question, a heatmap of the Z-scores and
+a plot of median values of positive and negative Z-scores for each time moment. The median is calculated
+over all the ROIs. Parameters for these plots for PLS tasks are given under sub-keys <code class="docutils literal notranslate"><span class="pre">&quot;heatmap&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;barplot&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;medians&quot;</span></code>.</p>
+<p>Non-PLS tasks are described in the next two sub-sections.</p>
+</section>
+<section id="comparisons-of-distributions-of-correlations-between-brain-responses-and-religiosity-scores">
+<h3>Comparisons of distributions of correlations between brain responses and religiosity scores<a class="headerlink" href="#comparisons-of-distributions-of-correlations-between-brain-responses-and-religiosity-scores" title="Link to this heading"></a></h3>
+<p>As an additional sub-task, univariate statistical comparisons of distributions of correlation
+coefficients for two groups of subjects are performed. The correlation coefficients are those
+between the MEG responses at a given point in (ROI, time) space, and subjects’ Santa-Clara
+religiosity scores, for a given group.</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;compare_corrs_2groups1img&quot;</span></code></strong>. In this task, correlation coefficients between MEG responses to
+a given image type occurring at a each point in (ROI, time) space, and the Santa-Clara religiosity
+scores are calculated for each subject. Then distributions of these coefficients for two groups
+(SCZ vs ASD) are compared. The main processing code is provided in the module <code class="docutils literal notranslate"><span class="pre">bootes_multivariate.py</span></code>
+by Bonnie Ng. Please see the source code for the details. The image ID presented to the two groups
+is specified by the key <code class="docutils literal notranslate"><span class="pre">&quot;event_id&quot;</span></code>. The SC scores for each participant are retrieved from the
+column designated by the key <code class="docutils literal notranslate"><span class="pre">&quot;santa_clara_colname&quot;</span></code> of the main .csv file, as explained above.
+All the inputs necessary to make the <code class="docutils literal notranslate"><span class="pre">bootes_multivariate()</span></code> call are provided under the key
+<code class="docutils literal notranslate"><span class="pre">&quot;compare_corrs&quot;</span></code> of this step’s configuration.</p></li>
+</ul>
+<p>After running, a heatmap plot similar to those for PLS tasks is produced. The settings for the this
+plot are included under the <code class="docutils literal notranslate"><span class="pre">&quot;compare_corrs&quot;</span></code> key.</p>
+</section>
+<section id="statistical-models-fitting">
+<h3>Statistical models fitting<a class="headerlink" href="#statistical-models-fitting" title="Link to this heading"></a></h3>
+<p>This group of tasks involves fitting Ordinary Least Squares (OLS) statistical model for each ROI.
+The model describes brain responses to the presented image type as function of subjects age,
+sex, SCZ vs ASD group, and religiosity.</p>
+<p>Specifically, for a given subject let <code class="docutils literal notranslate"><span class="pre">Y</span></code> denote the STD of a Hilbert envelope of the induced response
+<strong>integrated over the time interval</strong> given by the key <code class="docutils literal notranslate"><span class="pre">&quot;pls_interval&quot;</span></code>. Then the following two OLS tasks
+are considered:</p>
+<p><em>Single image</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Y</span> <span class="o">~</span> <span class="n">const</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">*</span><span class="n">age</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">*</span><span class="n">sex</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">*</span><span class="n">group</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">*</span><span class="n">religion</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">group</span><span class="o">*</span><span class="n">religion</span>
+</pre></div>
+</div>
+<p><em>A pair of images</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">~</span> <span class="n">const</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">*</span><span class="n">age</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">*</span><span class="n">sex</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">*</span><span class="n">group</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">*</span><span class="n">religion</span> <span class="o">+</span> <span class="n">β</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">group</span><span class="o">*</span><span class="n">religion</span>
+</pre></div>
+</div>
+<p>Here the symbols have the following meaning:</p>
+<ul class="simple">
+<li><p>β(…): a regression coefficient (“slope”, “correlation”) for corresponding independent variable</p></li>
+<li><p>age: as is;</p></li>
+<li><p>sex: as is;</p></li>
+<li><p>group: 0 for SCZ, 1 for ASD;</p></li>
+<li><p>religion: a binary (believer/non-believer) or Santa-Clara score</p></li>
+</ul>
+<p>The values of interest are regression coefficients for the group, religion and
+group*religion variables - that is β(g), β(r) and β(i). For each ROI, the effect size
+for corresponding beta is calculated as beta itself divided by its standard error. The error is estimated
+analytically and is returned with the fit results. Also, the fit function returns a formal p-value
+of testing a null-hypothesis that beta in fact equals to 0. OLS model fitting code can be found
+in the <code class="docutils literal notranslate"><span class="pre">stat_model_fits.py</span></code> source file.</p>
+<p>Specific task names for stat model fitting analyses are as follows.</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;henv_std_sm_4groups1img&quot;</span></code></strong>. Fitting stat model for 2 groups and 2 binary religiosity
+categories for a single image type, using STDs of Hilbert envelopes as the brain response.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;henv_std_sm_4groups2img&quot;</span></code></strong>. Fitting stat model for 2 groups and 2 binary religiosity
+categories for the difference in responses to a given pair of image types, using STDs of
+Hilbert envelopes as the brain response.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;henv_std_sm_santa1img&quot;</span></code></strong>. Fitting stat model for 2 groups and Santa-Clara scores as
+religiosity measure for a single image type, using STDs of Hilbert envelopes as the brain
+response.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&quot;henv_std_sm_santa2img&quot;</span></code></strong>. Fitting stat model for 2 groups and Santa-Clara scores as
+religiosity measure for the difference in responses to a given pair of image types,
+using STDs of Hilbert envelopes as the brain response.</p></li>
+</ul>
+<p>When ran locally (i.e. not on the cluster), bar plots of distributions of effect sizes over
+the ROIs are produced for the three betas of interest - 3 sub-plots in one figure. Red bars
+denote ROIs where effect size had formally reached the statistical significance level,
+uncorrected for multiple comparisons.</p>
+<p>The figure is saved in a .png file with name like <code class="docutils literal notranslate"><span class="pre">henv_std_sm_santa1img_14-21Hz_111.png</span></code>
+(for the 1-mage task) or <code class="docutils literal notranslate"><span class="pre">henv_std_sm_santa2img_14-21Hz_img_111_121.png</span></code> (for the 2-image task).</p>
+<p>Note that for 1-image tasks the total number of such figures is 20 (5 bands x 4 images);
+for 2-image tasks the total is 30 (5 bands x 6 image pairs). To have a broad overview of all
+results at once in a single figure, one can run <code class="docutils literal notranslate"><span class="pre">&quot;plot_sm_fit_stats&quot;</span></code> step described later in
+<a class="reference internal" href="#13-plot-statistical-model-fitting-results-distributions-over-rois"><span class="xref myst">section 13</span></a>.</p>
+</section>
+</section>
+<section id="plot-pls-z-scores-on-an-inflated-brain-surface">
+<h2>12. Plot PLS z-scores on an inflated brain surface<a class="headerlink" href="#plot-pls-z-scores-on-an-inflated-brain-surface" title="Link to this heading"></a></h2>
+<p>In this step, the PLS z-scores for a specified latent variable taken at a given time moment are projected
+onto an inflated brain surface.</p>
+<p>As a result:</p>
+<ol class="arabic simple">
+<li><p>An interactive figure is displayed which can be used to observe the z-scores distribution
+from different viewpoints. A single or several views can be shown simulateneously either in a single
+figure or in individual figures.</p></li>
+<li><p>The figure(s) is saved as a .PNG file.</p></li>
+</ol>
+<p>The plotting arguments are specified under the key <code class="docutils literal notranslate"><span class="pre">&quot;plot_pls_inflated_brain&quot;</span></code> in the JSON configuration
+file. Most of those are self-explanatory or described in comments in the JSON itsef.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code> sub-key defines the time value in seconds for which the z-scores are plotted. Importantly,
+<strong>the actual PLS data displayed (i.e. task, latent variable, etc.) is determined by relevant settings
+under the <code class="docutils literal notranslate"><span class="pre">&quot;pls_analysis&quot;</span></code> key</strong>.</p>
+</section>
+<section id="plot-an-overview-of-statistical-model-fitting-results-for-all-bands-and-images">
+<h2>13. Plot an overview of statistical model fitting results for all bands and images<a class="headerlink" href="#plot-an-overview-of-statistical-model-fitting-results-for-all-bands-and-images" title="Link to this heading"></a></h2>
+<p>In this step, a single figure is produced which contains 20 or 30 subplots for the 1-image or
+2-image task, respectively. Each subplot reflects results for a specific choice of (frequency
+band, image), or (frequency band, image pair) respectively.</p>
+<p>Every subplot contains 4 triplets of bars. Each bar in a triplet shows the result for corresponding beta -
+that is β(g), β(r) and β(i) for the (band, image or image pair) in question.  Different
+triplets reflect different characteristics of the distribution of the betas over
+all the ROIs, namely: 1st triplet - the average, 2nd triplet - the STD, 3rd triplet - the average
+over STD ratio, and 4th triplet  - the total number of formally significant ROIs (if any)
+for each beta.</p>
+<p>Subplots are indexed row-wise from 0 to 19 for 1-image tasks and from 0 to 29 for 2-image tasks.
+A combination of (frequency band, image/image pair) for a given subplot is specified by a
+corresponding list element under the <code class="docutils literal notranslate"><span class="pre">&quot;pls_analysis/&quot;array_job_parms&quot;</span></code> key of the PLS analysis step.
+Namely, for the 1-image tasks this element should be a two-key dictionary like
+<code class="docutils literal notranslate"><span class="pre">{&quot;band&quot;:</span> <span class="pre">[8.0,13.0],</span> <span class="pre">&quot;event_id&quot;:</span> <span class="pre">111}</span></code>. For the 2-image tasks each element is a dictionary
+like <code class="docutils literal notranslate"><span class="pre">{&quot;band&quot;:</span> <span class="pre">[8.0,13.0],</span> <span class="pre">&quot;img_events&quot;:</span> <span class="pre">[111,121]}</span></code>.</p>
+<p>Other details for this step are specified under the main key <code class="docutils literal notranslate"><span class="pre">&quot;plot_sm_fit_stats&quot;</span></code> in the
+JSON configuration file.</p>
+<p>The produced figure is saved to a .png file with name like
+<code class="docutils literal notranslate"><span class="pre">henv_std_sm_santa1img_results_overview.png</span></code> or <code class="docutils literal notranslate"><span class="pre">henv_std_sm_santa2img_results_overview.png</span></code>,
+and a textual summary is printed to the console.</p>
+</section>
+<section id="plot-statistical-model-fits-results-for-all-rois-on-an-inflated-brain-surface">
+<h2>14. Plot statistical model fits results for all ROIs on an inflated brain surface<a class="headerlink" href="#plot-statistical-model-fits-results-for-all-rois-on-an-inflated-brain-surface" title="Link to this heading"></a></h2>
+<p>This step is similar to <a class="reference internal" href="#plot-pls-z-scores-on-an-inflated-brain-surface">step 12</a> and
+produces a 3-dimensional image of a distribution for the beta of interest effect size
+over the ROIs.</p>
+<p>Specific parameters for the 3D plot are given under the key <code class="docutils literal notranslate"><span class="pre">&quot;plot_sm_fit_inflated_brain&quot;</span></code>
+in the JSON configuration file. In particular, the beta to be plotted is given by the
+<code class="docutils literal notranslate"><span class="pre">&quot;what&quot;</span></code> subkey that can have values <code class="docutils literal notranslate"><span class="pre">&quot;group&quot;,</span> <span class="pre">&quot;rel&quot;,</span> <span class="pre">&quot;group*rel&quot;</span></code>. The displayed values
+can be clipped so that only ROIs showing above/below threshold results are marked - see
+comments for subkeys <code class="docutils literal notranslate"><span class="pre">&quot;apply_thresholds&quot;,&quot;clip_interval&quot;</span></code> in the configuration file.</p>
+<p>The produced figure is interactive, and is also saved in a final static form to a .png
+file with a name like <code class="docutils literal notranslate"><span class="pre">henv_std_sm_santa1img_14-21Hz_111_rel_6_views.png</span></code>.</p>
 </section>
 </section>
 

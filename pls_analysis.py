@@ -20,12 +20,42 @@ The following tasks are implemented.
     Mean-centered PLS for 4 sub-groups and 1 image. The subgroups are:
     SCZ-believers, ASD-believers, SCZ-nonbelievers, ASD-nonbelievers
 
+'henv_mc_4groups1img':
+    Mean-centered PLS for 4 sub-groups and 1 imagei, using Hilbert
+    envelopes rather than ERF responses. The subgroups are:
+    SCZ-believers, ASD-believers, SCZ-nonbelievers, ASD-nonbelievers
+
+'henv_std_mc_4groups1img':
+    Mean-centered PLS for 4 sub-groups and 1 imagei, using STDs of
+    Hilbert envelopes rather than ERF responses. The subgroups are:
+    SCZ-believers, ASD-believers, SCZ-nonbelievers, ASD-nonbelievers
+
+'henv_std_sm_4groups1img':
+    Fitting stat model for 2 groups, 2 religiosity categories for 
+    1 image, using STDs of Hilbert envelopes. 
+
+'henv_std_sm_4groups2img':
+    Fitting stat model for 2 groups, 2 religiosity categories for 
+    a pair of images, using STDs of Hilbert envelopes. 
+
+'henv_std_sm_santa1img':
+    Fitting stat model for 2 groups and santa-clara religiosity scores for 
+    1 image, using STDs of Hilbert envelopes. 
+
+'henv_std_sm_santa2img':
+    Fitting stat model for 2 groups and santa-clara religiosity scores for 
+    a pair of images, using STDs of Hilbert envelopes. 
+
 'erf_contrast_2group2img':
     Contrast (non-rotated) PLS for 2 groups and a pair
     of images
 
 'erf_contrast_2group4img':
     Contrast (non-rotated) PLS for 2 groups and 4 images
+
+'henv_std_contrast_4groups2img':
+    Contrast (non-rotated) PLS for 4 groups and 2 images for
+    STDs of Hilbert envelopes
 
 'compare_corrs_2groups1img':
     Compare distributions of correlations between behavioral variable(s) and
@@ -38,6 +68,7 @@ as well as matlab PLS analysis source files.
 import pandas as pd
 import numpy as np
 import h5py        # Needed to save/load files in .hdf5 format
+import pickle
 import mne
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -47,6 +78,7 @@ from run_pls import run_pls
 from heatmap import plot_channel_heatmap
 from plot_waveforms import adjust_signs
 from compare_corr_distributions import compare_corr_distributions 
+from stat_model_fits import stat_model_fits 
 
 def pls_analysis(ss):
     """
@@ -62,6 +94,21 @@ def pls_analysis(ss):
     if ss.data_host.cluster_job:
         config['show_plots'] = False
 
+    # For PLS, different array jobs mean different parameters while
+    # using the full set (i.e. all) subjects at once for the analysis. This requires
+    # N_ARRAY_JOBS to be set to 1 for all subject set selection operations,
+    # otherwise the subjects will be split between the jobs. To resolve this
+    # contradiction, we first load required PLS params to this step config based
+    # on the job number, and then reset N_ARRAY_JOBS, ijob to 1 and 0,
+    # respectively, to avoid subjects splitting between jobs.
+    if ss.args['N_ARRAY_JOBS'] > 1:
+        set_config_for_job(config, ss.ijob)
+        pls_args_mat = f'pls_args{ss.ijob}.mat'
+        ss.args['N_ARRAY_JOBS'] = 1
+        ss.ijob = 0
+    else:
+        pls_args_mat = 'pls_args.mat'
+
     return_precalculated_result = config['return_precalculated_result']
 
     # Here 2nd arg to get_step_out_file() can be any valid path
@@ -73,14 +120,22 @@ def pls_analysis(ss):
 
     if return_precalculated_result:
         if 'compare_corrs' not in config['task']:
-            res = run_pls(None, None, None, None, None, 
-                res_mat = res_mat, return_precalculated_result = True)
-            print(f'Loaded PLS analysis results from {res_mat}\n')
+            if '_sm_' not in config['task']:
+                res = run_pls(None, None, None, None, None, 
+                    res_mat = res_mat, return_precalculated_result = True)
+                print(f'Loaded PLS analysis results from {res_mat}\n')
+            else:
+                sm_pkl_file = get_sm_results_file(ss)
+                with open(sm_pkl_file, "rb") as f:
+                    sm_fit_results = pickle.load(f)
+                print(f'Loaded stat model fit results from {sm_pkl_file}\n')
         else:
             out_hdf5 = get_pls_results_hdf5_file(ss)
             res = read_corr_dist_results(out_hdf5)
             print(f'Loaded correlation distribution comparison analysis results from {out_hdf5}\n')
+        # end of loading precalculated results branch
     else:
+        # Run requested analyses
         # Get subjects groups info
         subjects_info_csv = ss.data_host.get_subjects_info_csv()
         in_dir = ss.data_host.get_step_in_dir(STEP)
@@ -92,11 +147,11 @@ def pls_analysis(ss):
 
         path_to_matlab_pls = ss.data_host.path_to_matlab_pls
         options = config['pls_options_mc']
-        args_mat = str(ss.data_host.get_step_out_dir(STEP) / 'pls_args.mat')
+        args_mat = str(ss.data_host.get_step_out_dir(STEP) / pls_args_mat)
 
-        if (config['task'] == 'erf_mc_2groups1img') or \
-                (config['task'] == 'erf_mc_4groups1img'):
-            # lst_dmat = [data0, data1]; dataI = nsubjIngroup x nfeatures, for a single
+        if config['task'] in ('erf_mc_2groups1img','erf_mc_4groups1img', \
+                'henv_mc_4groups1img','henv_std_mc_4groups1img'):
+            # lst_dmat = [data0, data1]; dataI = nsubjPerGroup x nfeatures, for a single
             # event ID specified in config
             lst_dmat, lst_sid = collect_groups_for_event(ss, STEP, subj2group)
 
@@ -137,10 +192,19 @@ def pls_analysis(ss):
             res = run_pls(lst_dmat, lst_nsubj, ncond, options, path_to_matlab_pls, args_mat = args_mat,
                 res_mat = res_mat, return_precalculated_result = return_precalculated_result)
         elif (config['task'] == 'erf_contrast_2group2img') or \
-                (config['task'] == 'erf_contrast_2group4img'):
+                (config['task'] == 'erf_contrast_2group4img') or \
+                (config['task'] == 'henv_std_contrast_4groups2img'):
             lst_dmat = []
             lst_nsubj = []
-            for gID in (0,1):
+
+            if '2group' in config['task']:
+                ngroups = 2
+            elif '4group' in config['task']:
+                ngroups = 4
+            # By design, we'll fail with ngroups undefined if none of the above
+            # tests are true
+
+            for gID in range(ngroups):
                 config['group_id'] = gID
                 # dmat: shape `(nsubj*ncond, nfeatures)` - dmat for 1 group,
                 dmat, nsubj = prepare_1grpNimgs(ss, STEP, subj2group)
@@ -167,18 +231,48 @@ def pls_analysis(ss):
             ccd_res = compare_corr_distributions(ss, lstSID, subj2group)
             out_hdf5 = get_pls_results_hdf5_file(ss)
             res = write_corr_dist_results(out_hdf5, config['task'], config['event_id'], ccd_res)
+        elif config['task'] in ('henv_std_sm_4groups1img','henv_std_sm_4groups2img',
+                                'henv_std_sm_santa1img','henv_std_sm_santa2img'):
+            sm_fit_results = stat_model_fits(ss)
         else:
             raise ValueError(f'Unrecognized PLS task {config["task"]}')
 
         print('All analyses completed\n')
 
     # -------------------------------------------------------
-    # Print outs and heatmaps
+    # Printouts and heatmaps
     # -------------------------------------------------------
     if 'compare_corrs' not in config['task']:
-        display_pls_results(ss, res)
+        if '_sm_' not in config['task']:
+            display_pls_results(ss, res)
+        else:
+            display_sm_fit_results(ss, sm_fit_results)
     else:
         display_ccd_results(ss, res)
+
+def set_config_for_job(cfg, ijob):
+    """
+    When running an array job, set this step's configuration parameters
+    in accordance with the job number. The `N_ARRAY_JOBS` in config should
+    be equal to the number of elements in the 'array_job_parms' list, 
+    where each element is a dictionary {key_i:value_i} where keys and
+    values define this step's parameters to be set.
+
+    This function is never called for `N_ARRAY_JOBS = 1`.
+
+    Args:
+        cfg(dict): this step configuration dictionary
+        ijob(int): 0-based array job index
+
+    Returns:
+        None
+
+    """
+    parms_dict = cfg['array_job_parms'][ijob]
+
+    for key in parms_dict:
+        cfg[key] = parms_dict[key]
+
 
 def display_pls_results(ss, res):        
     """
@@ -323,14 +417,6 @@ def display_ccd_results(ss, res):
     Print out short summary of CCD results, and display heat maps on a
     local computer system.
 
-    The `res` dictionary contains the following fields.
-
-    task( string): the corr dists task name
-    eID (int): the event (image) ID
-    ccd_res (CCD_Result): a named tuple with fields: 'effect_sizes',
-        'hedges_g', 'CI_lower', 'CI_upper', 'bootstrap_means_A', 'bootstrap_means_B'.
-        Each field contains a vector with length `nfeatures = nlabels x ntimes` 
-
     Args:
         ss(obj): reference to this app object
         res(dict): a dictionary generated by reading .hdf5 file with CCD
@@ -338,6 +424,16 @@ def display_ccd_results(ss, res):
 
     Returns:
         None
+
+    The `res` dictionary contains the following fields:
+
+        **task** (string): the corr dists task name
+
+        **eID** (int): the event (image) ID
+
+        **ccd_res** (CCD_Result): a named tuple with fields 'effect_sizes', \
+            'hedges_g', 'CI_lower', 'CI_upper', 'bootstrap_means_A', 'bootstrap_means_B'. \
+            Each field contains a vector with length `nfeatures = nlabels x ntimes` 
 
     """
     print(f'Read dictionary with CCD results for task \'{res["task"]}\', image ID = {res["eID"]}.')
@@ -455,6 +551,216 @@ def display_ccd_results(ss, res):
                         dpi = hm['dpi'],
                         show = show)
 
+def display_sm_fit_results(ss, res):        
+    """
+    Print out a summary of stat model fit results, and display plots on a
+    local computer system.
+
+    Args:
+        ss(obj): reference to this app object
+        res(dict): dictionary roi -> <fit results object>
+
+    Returns:
+        None
+
+    """
+    STEP = 'pls_analysis'
+    cfg = ss.args[STEP]
+    task = cfg['task']
+    band = cfg['band']
+    img = cfg['event_id']
+
+    fig_title = f'Task: \'{task}\', {band} Hz, '
+
+    if '1img' in task:
+        fig_title += f'img = {cfg["img_types"][str(img)]}'
+    elif '2img' in task:
+        img_names = [cfg["img_types"][str(img)] for img in cfg['img_events']]
+        fig_title += f'{img_names[1]} - {img_names[0]}'
+    else:
+        raise ValueError(f'Task \'{task}\' not recognized or not implemented')
+
+    signif_rois = []
+
+    for roi in res.keys():
+        # -------------------------------------------------------------
+        # Fit results object properties of interest:
+        #   .params[<name>], where for categorical parameters names are:
+        #       'C(gender)[T.M]', 'C(believer)[T.1]', 'C(group)[T.1]',
+        #       'C(believer)[T.1]:C(group)[T.1]' - returns fitted value
+        #       of the parameter
+        #   .bse[<name>] - standard error of the parameter
+        #   .f_pvalue - P-value for the F statistics
+        #   .pvalues[<name>] - 2-tailed P-values for the t-statistics for
+        #       fitted parms
+        # -------------------------------------------------------------
+        # print(res.summary())
+        if res[roi].f_pvalue <=0.05:
+            signif_rois.append(roi)
+
+    if signif_rois:
+        print(f'Stat-significant ROIs for {band} Hz band, image {img}:')
+
+        for roi in signif_rois:
+            print(f'ROI: {roi}')
+            print(res[roi].summary())
+            print('')
+    else:
+        print('No stat-significant ROIs found')
+
+    # Prepare effect size data
+    params_to_plot, eff_sizes, pvalues = get_eff_sizes_and_pvals(task, res)
+    print_param_stats(params_to_plot, eff_sizes, pvalues)
+
+    # Everything following is only used in plotting on local machine. Exit here if
+    # running on the cluster
+    if ss.data_host.cluster_job:
+        return
+
+    # Reorder results in accordance with specified ROI list
+    ordering_csv = ss.data_host.get_ordering_csv()
+    # ordering is a ndarray label indices yielding mapping current idx -> new idx
+    ordering = construct_ordering(ordering_csv, res.keys())
+
+    # Construct PNG file pathname
+    pkl_file = ss.data_host.get_step_out_file(STEP, cfg['in_dir'])  # This is .pkl file name we are working with
+
+    # Save plot where the heatmaps are saved
+    plot_path = ss.data_host.root / ss.data_host.meg / ss.data_host.config["out_root"] / \
+                    ss.data_host.pipeline_version / cfg['heatmap']['out_dir']
+
+    pngname = plot_path / (Path(pkl_file).stem + '.png')
+
+    # Convert eff_sizes, pvalues to arrays with shape (nparams,nlabels), reorder
+    # and plot
+    roi_array = np.array(list(res.keys()))
+    plot_eff_sizes(roi_array[ordering], eff_sizes[:,ordering],
+            pvalues[:,ordering], params_to_plot, fig_title,
+            show = cfg['show_plots'], pngname = pngname)
+
+def get_eff_sizes_and_pvals(task, res):
+    """
+    Return arrays of effect sizes and ROI p-values for
+    parameters corresponding to group, religiosity and their
+    interaction.
+
+    Args:
+        task(str): one of SM-fitting tasks
+        res(dict): fitting results in the form {roi: <OLS-results object>}
+
+    Returns:
+        pnames(tuple of str): OLS model parameter names corresponding to group,
+            religiosity and interaction
+        eff_sizes(ndarray): shape(nparms, nrois) effect sizes for each ROI
+        pvalues(ndarray): shape(nparms, nrois) t-test p-values for each ROI
+
+    """
+    if task in ('henv_std_sm_4groups1img','henv_std_sm_4groups2img'):
+        pnames = 'C(group)[T.1]','C(believer)[T.1]','C(believer)[T.1]:C(group)[T.1]'
+    elif task in ('henv_std_sm_santa1img','henv_std_sm_santa2img'):
+        pnames = 'C(group)[T.1]', 'sc', 'sc:C(group)[T.1]'
+    else:
+        raise ValueError(f'Unrecognized task: {task})')
+
+    eff_sizes = []
+    pvalues = []
+        
+    for param in pnames:
+        es = []
+        pv = []
+
+        # Collect effect sizes for param over ROIs
+        for roi in res.keys():
+            beta = res[roi].params[param]
+            dev = res[roi].bse[param]
+            es.append(beta/dev)
+            pv.append(res[roi].pvalues[param])
+
+        eff_sizes.append(es)
+        pvalues.append(pv)
+
+    eff_sizes = np.array(eff_sizes)
+    pvalues = np.array(pvalues)
+
+    return pnames, eff_sizes, pvalues
+
+def print_param_stats(params_to_plot, eff_sizes, pvalues, alpha = 0.05):
+    """
+    Print out general stats for fitted parameters values distribution
+    over ROIs.
+
+    Args:
+        params_to_plot(list of str): names of fitted parameters, len = nparm
+        eff_sizes(ndarray): shape (nparm, nrois) - effect sizes for each fitted
+            parameter
+        pvalues(ndarray): shape (nparm, nrois) - t-test 2-sided p-values for each
+            parameter per ROI
+        alpha(float): significance threshold
+
+    Returns:
+        None
+
+    """
+    means = np.mean(eff_sizes, axis = 1)
+    stds = np.std(eff_sizes, axis = 1)
+    ratios = means / stds
+    nsig = np.sum(pvalues < alpha, axis = 1)
+    df = pd.DataFrame({'Beta':params_to_plot, 'Mean':means,'STD':stds,
+                       'Mean/STD':ratios, 'n_signif':nsig})
+    print(df.to_string(index=False, float_format="{:.2f}".format))
+    print('')
+    return
+    
+def plot_eff_sizes(labels,data,pvalues,subplot_titles, super_title = None,
+            show = True, pngname = None, ylabel = 'eff_size', dpi = 300, alpha = 0.05):
+    """
+    Create bar plots of effect sizes for labels (ROIs); mark results with
+    significant p-values with red color.
+
+    Args:
+        labels(list of str): ROI (label) names
+        data(ndarray): shape(nplot_params,nlabels) effect sizes distributions
+            over ROIs for each OLS model parameter
+        pvalues(ndarray): shape (nlabels,) p-values returned by OLS fit
+        subplot_titles(list of str): titles for each bar plot
+        super_title(str or None): figure title
+        show(bool): flag to show interactive plot
+        pngname(pathlike): if not None, full path name of PNG file to save the plot
+        ylabel(str): Y axis label for subplots
+        dpi(int): PNG plot resolution
+        alphs(float): significance level (p-value should be less than alpha to be
+            significant)
+
+    Returns:
+        None
+
+    """
+    ncurves = data.shape[0]
+    nlabels = len(labels)
+
+    # Create the figure and subplots
+    fig, axes = plt.subplots(ncurves, 1, figsize=(16, 9), sharex=True)
+
+    for i, ax in enumerate(axes):
+        colors = ['red' if pvalues[i, j] < alpha else 'blue' for j in range(nlabels)]
+        ax.bar(range(nlabels), data[i],color=colors)  # Bar plot for each row of the array
+        ax.set_title(subplot_titles[i])
+        ax.set_ylabel(ylabel) 
+
+        if i < ncurves - 1:
+            ax.set_xticklabels([])  # Remove tick labels but keep ticks
+        else:
+            ax.set_xticks(range(nlabels))
+            ax.set_xticklabels(labels, rotation=90, fontsize=8)  # Set labels for the lowest plot
+
+    fig.suptitle(super_title, fontsize=12, fontweight='bold')
+    plt.tight_layout()
+
+    if pngname is not None:
+        plt.savefig(pngname, dpi=dpi)
+
+    if show:
+        plt.show()
 
 def get_pls_results_hdf5_file(ss):
     """
@@ -477,6 +783,24 @@ def get_pls_results_hdf5_file(ss):
         out_hdf5 = out_file
 
     return ss.data_host.get_step_out_dir(STEP) / out_hdf5
+
+def get_sm_results_file(ss):
+    """
+    Return full pathname of the .pkl file for saving/loading
+    stat model fit results.
+
+    Args:
+        ss(object): a reference to this app object
+
+    Returns:
+        out_file(Path): full pathname of the output file
+
+    """
+    STEP = 'pls_analysis'
+    config = ss.args[STEP]
+    out_file = ss.data_host.get_step_out_file(STEP, config['in_dir'])
+
+    return ss.data_host.get_step_out_dir(STEP) / out_file
 
 def write_pls_results(out_hdf5, task, contrasts, singular_values, p_values, z_scores,
                 label_names, SR, perms_boots):
@@ -520,18 +844,25 @@ def read_pls_results(results_hdf5):
     Returns:
         res(dict): a dictionary with the PLS results data
 
-    The `res` dictionary contains the following fields.
+    The `res` dictionary contains the following fields:
+        **task** (string): PLS task name
 
-    task( string): PLS task name
-    contrasts (ndarray): `shape(nlv,nlv)` predefined or calculated contrasts, as columns
-        of the contrasts matrix
-    singular_values (ndarray): `shape(nlv,)` a list of PLS task singular values (1 per
-        a latent variable)
-    p_values (ndarray): `shape(nlv,)` a list of p-values (1 per a latent variable)
-    z_scores (ndarray): `shape(nlv,nlabels,ntimes)` Z-scores for each (lv,ROI,time_point)
-    label_names (list of str): ROI names
-    SR (float): sampling rate along time axis, Hz
-    perms_boots (list of int): `[nperms, nboots]` numbers of permutations and boot resamples used
+        **contrasts** (ndarray): `shape(nlv,nlv)` predefined or calculated contrasts, as columns \
+            of the contrasts matrix
+
+        **singular_values** (ndarray): `shape(nlv,)` a list of PLS task singular values (1 per \
+            a latent variable)
+
+        **p_values** (ndarray): `shape(nlv,)` a list of p-values (1 per a latent variable)
+
+        **z_scores** (ndarray): `shape(nlv,nlabels,ntimes)` Z-scores for each (lv,ROI,time_point)
+
+        **label_names** (list of str): ROI names
+
+        **SR** (float): sampling rate along time axis, Hz
+
+        **perms_boots** (list of int): `[nperms, nboots]` numbers of permutations and boot resamples used
+
     """
     res = {}
 
@@ -581,6 +912,7 @@ def prepare_1grpNimgs(ss, step, subj2group):
     config['event_id'] = eIDorg
 
     # Now lst is a list of dmats for requested group - one dmat per eID
+    # eid2sid is a list of lists of subject IDs for each image ID in img_events    
     # Ensure that we have the same subjects set for each condition
     bRaiseError = False
     for i,eID in enumerate(img_events):
@@ -605,7 +937,9 @@ def prepare_1grpNimgs(ss, step, subj2group):
             
 def include_in_pls(cfg, in_file):
     """
-    Check if an input file should be used for PLS analysis
+    Check if an input file should be used for PLS analysis. Note that 
+    event ID should be set properly in the `cfg` dictionary for the
+    correct file to be selected.
 
     Args:
         cfg(dict): this step configuration dictionary
@@ -618,11 +952,24 @@ def include_in_pls(cfg, in_file):
     include = False
     tasks = ('erf_mc_2groups1img','erf_mc_4groups1img', 'erf_mc_1group4img',
              'erf_mc_2group4img','erf_mc_pooled4img','erf_contrast_2group2img',
-             'erf_contrast_2group4img','compare_corrs_2groups1img')
+             'erf_contrast_2group4img','compare_corrs_2groups1img',
+             'henv_mc_4groups1img','henv_std_mc_4groups1img','henv_std_contrast_4groups2img',
+             'henv_std_sm_4groups1img','henv_std_sm_4groups2img','henv_std_sm_santa1img',
+             'henv_std_sm_santa2img')
 
     if cfg['task'] in tasks:
-        if f'erf_{cfg["event_id"]}' in str(in_file):
-            include = True
+        if not ('henv' in cfg['task']):
+            # one of ERF tasks
+            if f'erf_{cfg["event_id"]}' in str(in_file):
+                include = True
+        else:
+            # one of HENV tasks
+            fmin, fmax = cfg['band']
+            str_band = f'henv_{fmin:.1f}-{fmax:.1f}Hz'
+            eID = cfg['event_id']
+
+            if all([ptrn in str(in_file) for ptrn in (str_band,f'Hz_{eID}')]):
+                include = True
     else:
         raise ValueError(f'Unrecognized PLS task. Valid tasks are: {tasks}')
 
@@ -659,7 +1006,7 @@ def get_subj_groups(cfg, subjects_info_csv, lstSID):
     df[bias_col] = df[bias_col].apply(lambda x: 0 if x < 0 else 1)
 
     # Create a dictionary sID -> group #
-    if cfg['task'] != 'erf_mc_4groups1img':
+    if '4group' not in cfg['task']:
         # Create 2 groups: SCZ (group 0) and ASD (group 1)
         subj2group = dict(zip(df[id_col], df[bias_col]))
     else:
@@ -695,7 +1042,9 @@ def get_label_names(config, files):
 
         # label_tcs is nepochs x nlabels x ntimes (for epoched data)
         # label_names (nlabels,) vector of ROI names
-        label_names = read_roi_time_courses(in_file)[1]
+        include_labels = config['include_labels']
+        label_names = read_selected_roi_time_courses(in_file,
+                        include_labels = include_labels)[1]
         return label_names
 
 def collect_groups_for_event(ss, step, subj2group):
@@ -716,9 +1065,18 @@ def collect_groups_for_event(ss, step, subj2group):
             each group
 
     """
-    t0 = ss.args['src_rec']['epochs']['t_range'][0] # epoch's time origin
-    SR = ss.args['src_erf']['target_sample_rate']
     config = ss.args[step]
+    task = config['task']
+
+    t0 = ss.args['src_rec']['epochs']['t_range'][0] # epoch's time origin
+
+    if ('erf' in task) or task == ('compare_corrs_2groups1img'):
+        SR = ss.args['src_erf']['target_sample_rate']
+    elif 'henv' in task:
+        SR = ss.args['src_hilbert']['target_sample_rate']
+
+    # NOTE: We'll fail here with SR not defined for tasks not mentioned above,
+    # which is the intention
 
     # Calculate index interval for PLS
     tstart, tend = config['pls_interval']
@@ -728,24 +1086,26 @@ def collect_groups_for_event(ss, step, subj2group):
     iend = int(SR*tend) + 1
 
     # Calculate index interval for sign adjustments
+    # This only will be used for erf tasks
     tstart = ss.args['src_erf']['sign_adjust_interval'][0] - t0
     tend = ss.args['src_erf']['sign_adjust_interval'][1] - t0
     isign_start = int(SR*tstart)
     isign_end = int(SR*tend) + 1
 
     # If erf_power is True - use square of time courses
-    erf_power = config['erf_power']
+    erf_power = False if 'henv' in task else config['erf_power']
 
-    if erf_power:
+    if erf_power or ('henv' in task):
         config['adjust_signs'] = False
 
-    ngroups = 4 if config['task'] == 'erf_mc_4groups1img' else 2
+    ngroups = 4 if '4group' in config['task'] else 2
 
     lst_data = [[] for i in range(ngroups)]
     lst_sid = [[] for i in range(ngroups)]
 
     files = su.files_to_process(ss, step)
     epoch0 = None       # Reference epoch for sign adjustment
+    include_labels = config['include_labels']
 
     for in_file, out_file in files:
         # Choose only files names containing _erf_<eID>
@@ -756,10 +1116,13 @@ def collect_groups_for_event(ss, step, subj2group):
         # label_names (nlabels,) vector of ROI names
         # For ERF files nepochs = 2: 1st epoch is the evoked for condition,
         # 2nd epoch is STD
-        label_tcs, label_names = read_roi_time_courses(in_file)[:2]
+        label_tcs, label_names = read_selected_roi_time_courses(in_file,
+                        include_labels = include_labels)[:2]
 
         if erf_power:
-            label_tcs = label_tcs * label_tcs
+            # NOTE: Only square the 1st epoch (the mean). The 2nd epoch
+            # (STDs) will still be the STDs of the original tcs
+            label_tcs[0] = label_tcs[0] * label_tcs[0]
 
         if config['adjust_signs']:
             # Adjust signs of label time courses to those of the 1st subject
@@ -776,7 +1139,11 @@ def collect_groups_for_event(ss, step, subj2group):
 
         sid = su.fif_subject(in_file)
         group = subj2group[sid]
-        lst_data[group].append(label_tcs[0][:,istart:iend].flatten(order = 'C'))
+
+        # Use the 1st of two epochs for PLS unless we do PLS on STDs
+        epoch_idx = 0 if '_std_' not in task else 1
+
+        lst_data[group].append(label_tcs[epoch_idx][:,istart:iend].flatten(order = 'C'))
         lst_sid[group].append(sid)
 
     lst_dmat = [np.array(lst) for lst in lst_data]
@@ -857,6 +1224,9 @@ def construct_titles(ss):
 
     if (config['task'] == 'erf_mc_2groups1img') or \
             (config['task'] == 'erf_mc_4groups1img') or \
+            (config['task'] == 'henv_mc_4groups1img') or \
+            (config['task'] == 'henv_std_mc_4groups1img') or \
+            (config['task'] == 'henv_std_contrast_4groups2img') or \
             (config['task'] == 'compare_corrs_2groups1img'):
         title = f'File: {out_file}'
         pngname = plot_path / (Path(out_file).stem + '.png')
@@ -883,7 +1253,8 @@ def get_bar_labels(cfg):
     design variable depending on PLS task.
     """
     four_img_tasks = ('erf_mc_1group4img','erf_mc_pooled4img')
-    four_groups_tasks = ('erf_mc_4groups1img')
+    four_groups_tasks = ('erf_mc_4groups1img','henv_mc_4groups1img','henv_std_mc_4groups1img',
+                         'henv_std_sm_4groups1img','henv_std_sm_4groups2img')
 
     if cfg['task'] in four_img_tasks:
         return list(cfg['img_types'].values())
@@ -1029,13 +1400,15 @@ def read_corr_dist_results(results_hdf5):
     Returns:
         res(dict): a dictionary with the results data
 
-    The `res` dictionary contains the following fields.
+    The `res` dictionary contains the following fields:
 
-    task( string): the corr dists task name
-    eID (int): the event (image) ID
-    ccd_res (CCD_Result): a named tuple with fields: 'effect_sizes',
-        'hedges_g', 'CI_lower', 'CI_upper', 'bootstrap_means_A', 'bootstrap_means_B'.
-        Each field contains a vector with length `nfeatures = nlabels x ntimes` 
+        **task** ( string): the corr dists task name
+
+        **eID** (int): the event (image) ID
+
+        **ccd_res** (CCD_Result): a named tuple with fields 'effect_sizes', \
+            'hedges_g', 'CI_lower', 'CI_upper', 'bootstrap_means_A', 'bootstrap_means_B'. \
+            Each field contains a vector with length `nfeatures = nlabels x ntimes` 
 
     """
     from compare_corr_distributions import CCD_Result
@@ -1053,4 +1426,61 @@ def read_corr_dist_results(results_hdf5):
         res['ccd_res'] = CCD_Result(*lst)
 
     return res
+
+def read_selected_roi_time_courses(ltc_file, include_labels = None):
+    """
+    Read selected ROI (label) time courses from .hdf5 file created using
+    `write_roi_time_courses()` function from `src_rec.py`. This is a simple
+    wrapper over the `read_roi_time_courses(ltc_file)` function.
+
+    Args:
+        ltc_file (Path | str): full pathname of the output .hdf5 file
+        include_labels (list of str | None): if supplied, should be a list case-insensitieve
+            strings representing label names. Only time courses from labels that belong
+            to this list will be returned.
+
+    Returns:
+        label_tcs (ndarray): `nlabels x ntimes` or `nepochs x nlabels x ntimes` for non-epoched
+            or epoched data, respectively; ROI time courses
+        label_names (ndarray of str):  1 x nlabels vector of ROI names corresponding to 
+            the returned time courses
+        vertno (ndarray or None): 1D signed integer array of vertex numbers corresponding
+            to the ROI COMs. See above regarding the vertex numbers encoding rules.
+        rr (ndarray or None): nlabels x 3; coordinates of ROI reference locations
+            in head coordinates
+        W (ndarray or None): nchans x nlabels; spatial filter weights for each ROI.
+            Those can be used to reconstruct ROI time courses as `W.T @ sensor_data` 
+        pz (float or None): data's pseudo-Z found as `pz = trace(R)/tr(N)`,
+            where `N` is the noise covariance
+        events(ndarray | list of ndarray): `nevents x 3` or `[events1,...,eventsK,...]`;
+            events array in MNE Python 'events' format for non-epoched data, or a list
+            of such arrays for epoched data, respectively. Note that in the latter case
+            the event sample index is counted from the start of the epoch (not from the trigger)
+        events_id_dict(dict): dictionary event_descr -> event_id; see `event_id` parameter
+            description of the MNE `Epochs` object constructor
+
+    """
+    res = read_roi_time_courses(ltc_file)
+
+    if include_labels is None:
+        return res
+
+    ref_lst_lower = {x.lower() for x in include_labels}     # This is a set, not a list
+    label_names = res[1]
+
+    indices, labels_keep = zip(*[(i, s) for i, s in enumerate(label_names) if s.lower() in ref_lst_lower]) \
+            or ([], [])
+
+    if not indices:
+        raise ValueError(f'No labels found in {ltc_file} match those specified in the include_labels')
+
+    if res[0].ndim == 2:    # Non-epoched data
+        label_tcs = res[0][indices,:]
+    else:
+        label_tcs = res[0][:,indices,:]
+
+    W = res[4][:,indices]
+
+    return label_tcs, labels_keep, res[2], res[3], W, res[5], res[6], res[7] 
+
 

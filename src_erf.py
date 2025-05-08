@@ -103,6 +103,8 @@ def src_erf(ss):
         # Process the in_file
         # read_roi_time_courses() returns:
         # (label_tcs, label_names, vertno, rr, W, pz, events, events_id_dict)
+        # NOTE: events_id_dict is always returned, but can be None. So getting
+        # events as <returned_tuple>[-2] is safe.
         events = read_roi_time_courses(in_file)[-2]
 
         for eID in event_ids: 
@@ -251,6 +253,8 @@ def process_collected_evokes(config, all_results, event_ids, erf_hdf5):
         # --- end of for tsk cycle
 
         if task_dict:
+            # !!! IMPORTANT !!!
+            # !!! EVENTS ARRAYS ARE NOT CORRECTED FOR NEW SAMPLE RATE !!!
             write_roi_time_courses(out_file, erf_tcs, task_dict[eID]['label_names'],
                         vertno = task_dict[eID]['vertno'],
                         rr = task_dict[eID]['rr'],
